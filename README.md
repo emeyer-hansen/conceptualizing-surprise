@@ -10,10 +10,10 @@
 A formal (re)conceptualization of surprise is developed by the author for the social sciences in the research paper *Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information-Theoretic approach for the Social Sciences* (see the Abstract below). With still unfinished sections, the paper is currently very much a work-in-progress. It subscribes to the [*open science standard*](https://www.cos.io/open-science), is partly licensed under the CC BY 4.0 and partly under the GPL-3.0 (see the License below), and it is made freely available in PDF-format.
 
 ## Table of Contents
-- Abstract(#abstract)
-- FAQ(#faq)
-- Changelog(#changelog)
-- License(#license)
+- [Abstract](#abstract)
+- [FAQ](#faq)
+- [Changelog](#changelog)
+- [License](#license)
 
 <a id="abstract"></a>
 ## Abstract
