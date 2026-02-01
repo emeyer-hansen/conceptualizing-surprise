@@ -1,11 +1,11 @@
 [_metadata_:author]:- "Emil Niclas Meyer-Hansen"
-[_metadata_:date]:- "2026-01-14"
+[_metadata_:date]:- "2026-02-01"
 [_metadata_:tags]:- "markdown metadata"
 # Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information-Theoretic Approach for the Social Sciences
 
 *Emil Niclas Meyer-Hansen*
 
-2026-01-14
+2026-02-01
 
 A formal (re)conceptualization of surprise is developed by the author for the social sciences in the research paper *Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information-Theoretic approach for the Social Sciences* (see the Abstract below). With still unfinished sections, the paper is currently very much a work-in-progress. It subscribes to the [*open science standard*](https://www.cos.io/open-science), is partly licensed under the CC BY 4.0 and partly under the GPL-3.0 (see the License below), and it is made freely available in PDF-format.
 
@@ -28,6 +28,10 @@ Generally in the social sciences, results are informally deemed surprising if th
 
 <a id="changelog"></a>
 ## Changelog
+- **2026-02-01 13:58 CEST**
+  - [Version 2026-02-01-13-58] - Working Paper (Revised Release).
+     - Added content for the 'Demonstration'-section.
+     - Improved existing sections.
 - **2026-01-14 15:45 CEST**
   - [Version 2026-01-14-15-45] - Working Paper (Initial Release).
 
