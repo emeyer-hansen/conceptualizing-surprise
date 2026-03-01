@@ -26,7 +26,8 @@ Generally in the social sciences, a result is informally deemed 'surprising' if 
 <a id="faq"></a>
 ## FAQ
 - Where can I download the latest version of the paper? The newest version of the paper is always provided unter the 'Files'-tab and is simply named 'Article.pdf'.
-- How can I replicate this paper? The results of the research paper can be replicated in R using the replication files provided in the 'Archive'-folder. Identify the version of the paper that you want to replicate, download the files, specify your working directory and begin executing the code chunks provided in the R HTML File. Note that replication files are only provided from v2026-03-01-13-00 and onwards.
+- How can I replicate this paper? The results of the research paper can be replicated in R using the replication files provided in the 'Archive'-folder. Identify the version of the paper that you want to replicate, download the files, specify your working directory and begin executing the code chunks provided in the R HTML File. Due to Github-limitations on file size, data and plots are provided on its OSF project page instead (see below). Note that replication files are only provided from v2026-03-01-13-00 and onwards.
+- Can I download these materials elsewhere? Yes, the materials are also made available on the paper's OSF project page (DOI: [10.17605/OSF.IO/GQ6C8](https://doi.org/10.17605/OSF.IO/GQ6C8)).
 
 <a id="changelog"></a>
 ## Changelog
