@@ -1,0 +1,1884 @@
+---
+title: "Conceptualizing Surprise with the Jensen–Shannon distance^[**Version**: `r format(Sys.time(), '%Y-%m-%d-%H-%M')`. **Citation**: Meyer-Hansen, E. N. (`r format(Sys.time(), '%Y')`): 'Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian and Information Theoretical Approach for the Social Sciences', *Open Science Framework*, Working paper (v`r format(Sys.time(), '%Y-%m-%d-%H-%M')`). DOI: [10.17605/OSF.IO/GQ6C8](https://doi.org/10.17605/OSF.IO/GQ6C8)]"
+subtitle: "A Bayesian and Information Theoretical Approach for the Social Sciences"
+author: "Emil Niclas Meyer-Hansen^[**Author**: Independent Researcher, Aarhus, Denmark. Holds a Master of Science (MSc.) and Bachelor of Science (BSc.) in Political Science from [Aarhus University, Denmark](https://international.au.dk/) (email: emil098meyerhansen@gmail.com).]"
+date: "`r paste0(as.integer(format(Sys.Date(), '%d')), ' ', format(Sys.Date(), '%B %Y'))`"
+output:
+  bookdown::pdf_document2:
+    booktabs: true
+    toc: false
+    toc_depth: 1
+    number_sections: true
+    highlight: NULL
+    fig_width: 11
+    fig_height: 14
+    fig_caption: true
+    fig_topcaption: true
+    keep_tex: true
+    latex_engine: xelatex  # or pdflatex/lualatex
+    includes:
+      in_header: Quantifying-Surprise-header-v2026-03-01-13-00.tex
+    extra_dependencies:
+      hyperref: ["unicode=true", "breaklinks=true"]
+      lmodern: null
+      float: null
+      amsmath: null
+header-includes:
+  - \usepackage{etoolbox}
+  - \usepackage{abstract}
+  - \renewcommand{\abstractname}{}
+  - \renewenvironment{abstract}
+      {\begin{center}\normalfont\large\bfseries Abstract\end{center}\vspace{-1em}\begin{quotation}\large}
+      {\end{quotation}}
+  - \setlength{\parskip}{0em}
+  - \usepackage{floatrow}
+  - \usepackage{fvextra}
+  - \usepackage{natbib}
+  - \usepackage{graphicx}
+  - \usepackage{booktabs} 
+  - \usepackage{amsmath,amsfonts}
+  - \usepackage{psfrag}
+  - \usepackage{newunicodechar}
+  - \newunicodechar{−}{-}  % map U+2212 to ASCII minus
+  - \usepackage{tikz}
+  - \usepackage{pgf}
+  - \usepackage{pgfplots}
+  - \usepackage{listings}
+  - \usepackage{xcolor}
+  - \usepackage{setspace}
+  - \floatsetup[figure]{capposition=top}
+  - \floatsetup[table]{capposition=top}
+  - \restylefloat{figure}
+  - \usepackage[labelfont={bf}, labelsep=period, skip=4pt, position=top]{caption}
+  - \pgfplotsset{compat=1.18}
+  - \makeatletter
+    \def\fps@figure{H}
+    \def\fps@table{H}
+    \makeatother
+link-citations: true
+fontsize: 10pt
+papersize: a4
+abstract: "Generally in the social sciences, a result is informally deemed 'surprising' if its associated $p$-value is sufficiently small. This implicit interpretation, however, is both conceptually and mathematically inappropriate, and such misuse of the $p$-value can lead to erroneous conclusions about the novelty of results. To solve that issue, this paper builds on Bayesian inference, Information theory, and considerations specific to the social sciences, to argue for the adoption of a more appropriate conceptualization of surprise as the *relative entropy between prior and posterior knowledge*. Novel to the social sciences, this formal conceptualization enables researchers to appropriately measure surprise as the Jensen-Shannon distance, for which the paper contributes with easily implementable software and a demonstration of its use in relation to empirical data.©^[**License**: Except where otherwise indicated, all contents of this document and associated files are licensed under the *Creative Commons Attribution 4.0 International License* ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). All software, including but *not* necessarily limited to, source code, executable code, code snippets, code chunks, algorithms, and/or scripts, attributable to this document and/or its associated files are expressly excluded from the foregoing license, and unless otherwise indicated, are instead licensed under the *GNU General Public License, version 3* ([GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html)). By engaging with this document and/or any associated files, which include, but are *not* necessarily limited to, downloading, using, viewing, and/or distributing any of them, in parts of whole, you agree to comply with the applicable license terms for the respective content types.]"
+keywords: "Surprise; Novelty; Jensen-Shannon distance; JS distance; Jensen-Shannon divergence; JS divergence; Relative entropy; Kullback-Leibler divergence; KL divergence; Distance; Divergence; Dissimilarity; Differential entropy; Entropy; p-value; S-value; Information theory; Bayesian inference"
+linestretch: 1.5
+geometry: margin=1in
+documentclass: article
+mainfont: "Times New Roman"
+classoption: twoside
+---
+```{=latex}
+\newcommand{\dynamicdate}{`r format(Sys.Date(), "%d/%m/%Y")`}
+\newcommand{\dynamicversion}{`r paste0('v', format(Sys.time(), '%Y-%m-%d-%H-%M'))`}
+\newcommand{\doiref}{`r paste0('DOI: 10.17605/OSF.IO/GQ6C8')`}
+\newcommand{\authorref}{`r paste0('Emil Niclas Meyer-Hansen')`}
+\newcommand{\titleref}{`r paste0("Conceptualizing Surprise with the JS distance")`}
+\newcommand{\subtitleref}{`r paste0('A Bayesian and Information Theoretical Approach')`}
+\definecolor{Rkeyword}{RGB}{0,0,255}      % blue keywords
+\definecolor{Rcomment}{RGB}{0,128,0}      % green comments
+\definecolor{Rstring}{RGB}{163,21,21}     % red strings
+\definecolor{Rfunction}{RGB}{43,145,175}  % teal functions
+\lstdefinelanguage{R}{
+  keywords={if, else, repeat, while, function, for, in, next, break},
+  morekeywords={TRUE, FALSE, NULL, Inf, NaN, NA, NA_integer_, NA_real_, NA_complex_, NA_character_},
+  sensitive=true,
+  morecomment=[l]{\#},
+  morestring=[b]",
+  morestring=[b]',
+}
+\lstset{
+  language=R,
+   basicstyle=\ttfamily\small,
+      keywordstyle=\color{Rkeyword}\bfseries,
+      commentstyle=\color{Rcomment}\itshape,
+      stringstyle=\color{Rstring},
+      identifierstyle=\color{Rfunction},
+      numbers=left,
+      numberstyle=\tiny\color{gray},
+      stepnumber=1,
+      numbersep=5pt,
+      backgroundcolor=\color{white},
+      showspaces=false,
+      showstringspaces=false,
+      frame=single,
+      breaklines=true,
+      postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}
+}
+```
+
+```{r set_up, include=FALSE}
+
+# Set Working directory
+setwd("")
+
+
+# Load R packages
+library(pacman)
+pacman::p_load(
+  tidyverse,
+  knitr,
+  rmarkdown,
+  rstan,
+  brms,
+  rstudioapi,
+  bookdown,
+  parallel,
+  doParallel,
+  foreach,
+  random,
+  scrutiny,
+  weights,
+  pwr,
+  tikzDevice,
+  bayesplot,
+  tidybayes,
+  Polychrome,
+  KernSmooth,
+  devtools,
+  bayestestR,
+  effectsize,
+  datawizard,
+  HuraultMisc,
+  kableExtra
+)
+
+
+# Specify tikz options
+options(tikzLatexPackages = c(
+  "\\usepackage[utf8]{inputenc}",
+  "\\usepackage[T1]{fontenc}",
+  "\\usepackage{lmodern}",
+  "\\usepackage{amsmath,amssymb}"
+))
+options(tikzDefaultEngine = "xetex")
+
+
+# Get R and Rstudio version
+r_version <- sessionInfo()$R.version$version.string
+r_version <- stringr::str_replace(r_version, "R version ", "v")
+r_version <- stringr::str_replace(r_version, "\\(", "\\[")
+r_version <- stringr::str_replace(r_version, "\\)", "\\]")
+rstudio_version <- paste0('v', rstudioapi::versionInfo()$version)
+
+
+# Specify document Options
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+digits <- list(
+  text = 3,
+  figure = 3,
+  table = 3
+)
+options(digits = digits$figure)
+big_mark <- ","
+
+
+# Specify MCMC
+rstan_options(auto_write = TRUE)
+chains <- cores <- parallel::detectCores()-1
+options(mc.cores = cores)
+doParallel::registerDoParallel(cores)
+posterior_samples <- 40000
+warmup <- 2000
+iter <- ceiling((posterior_samples / chains) + warmup)
+posterior_samples <- (iter - warmup)*chains
+
+
+# Specify NHST
+alpha <- .05
+beta <- .2
+
+
+# Specify RNG 
+SEED <- 896663432 # random::randomNumbers(1, min = -1000000000, max = 1000000000, col = 1) %>% as.vector() # Commented-out function used to generate the specified seed
+set.seed(SEED)
+
+
+# Define QoL Rounding functions
+round_up <- function(x = NULL, digits = 3, add = FALSE){
+  # Exception handling
+  require(scrutiny)
+  require(weights)
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  stopifnot(length(digits) == 1)
+  stopifnot(is.numeric(digits))
+  digits <- round(digits)
+  stopifnot(length(add) == 1)
+  stopifnot(is.logical(add))
+  
+  return(weights::rd(scrutiny::round_up(x, digits = digits), digits = digits, add = add))
+}
+round_down <- function(x = NULL, digits = 3, add = FALSE){
+  # Exception handling
+  require(scrutiny)
+  require(weights)
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  stopifnot(length(digits) == 1)
+  stopifnot(is.numeric(digits))
+  digits <- round(digits)
+  stopifnot(length(add) == 1)
+  stopifnot(is.logical(add))
+  
+  return(weights::rd(scrutiny::round_down(x, digits = digits), digits = digits, add = add))
+}
+
+
+# Define QoL Formatting function
+qformat <- function(x = NULL, scientific = FALSE, trim = TRUE, big.mark = ","){
+  # Exception handling
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  stopifnot(length(scientific) == 1)
+  stopifnot(is.logical(scientific))
+  stopifnot(length(trim) == 1)
+  stopifnot(is.logical(trim))
+  stopifnot(length(big.mark) == 1)
+  stopifnot(is.character(big.mark))
+  
+  return(format(x, scientific = scientific, trim = trim, big.mark = big_mark))
+}
+
+
+# Define function to compute the mode
+modal <- function(x = NULL){
+  x_table_normed <- table(x)/length(x)
+  return(
+    data.frame(
+      mode = names(x_table_normed)[x_table_normed == max(x_table_normed)],
+      prop = x_table_normed[x_table_normed == max(x_table_normed)],
+      row.names = "1"
+    )
+  )
+}
+
+
+# Define Maximum-likelihood functions
+var2 <- function(x = NULL, x_mean = NULL, na.rm = FALSE){
+  # Exception handling
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  stopifnot(is.logical(na.rm))
+  if(!is.null(x_mean)){
+    stopifnot(length(x_mean) == 1)
+    stopifnot(is.numeric(x_mean))
+  }else{
+    x_mean <- mean(x, na.rm = na.rm)
+  }
+  x_var <- mean((x - x_mean)^2, na.rm = na.rm)
+  
+  return(x_var)
+}
+sd2 <- function(x = NULL, x_mean = NULL, na.rm = FALSE){
+  # Exception handling
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  stopifnot(length(na.rm) == 1)
+  stopifnot(is.logical(na.rm))
+  if(!is.null(x_mean)){
+    stopifnot(length(x_mean) == 1)
+    stopifnot(is.numeric(x_mean))
+  }else{
+    x_mean <- mean(x, na.rm = na.rm)
+  }
+  x_sd <- sqrt(var2(x = x, x_mean = x_mean, na.rm = FALSE))
+  
+  return(x_sd)
+}
+standardize2 <- function(x = NULL, x_mean = NULL, x_sd = NULL, na.rm = FALSE){
+  # Exception handling
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  stopifnot(length(na.rm) == 1)
+  stopifnot(is.logical(na.rm))
+  if(!is.null(x_mean)){
+    stopifnot(length(x_mean) == 1)
+    stopifnot(is.numeric(x_mean))
+  }else{
+    x_mean <- mean(x, na.rm = na.rm)
+  }
+  if(!is.null(x_sd)){
+    stopifnot(length(x_sd) == 1)
+    stopifnot(is.numeric(x_sd))
+    stopifnot(x_sd > 0)
+  }else{
+    x_sd <- sd2(x = x, x_mean = x_mean, na.rm = na.rm)
+  }
+  x_standardized <- (x - x_mean) / x_sd
+  
+  return(x_standardized)
+}
+
+
+# Define Monte-Carlo Standard Error function
+mcse <- function(x = NULL){
+  # Exception handling
+  require(rstan)
+  stopifnot(length(x) > 0)
+  stopifnot(is.numeric(x))
+  x_sd <- sd(x)
+  x_ess_bulk <- rstan::ess_bulk(x)
+  
+  return(x_sd / sqrt(x_ess_bulk))
+}
+
+
+# Define function for computing differential entropy for a Gaussian distribution
+differential_entropy_gaussian <- function(sigma = NULL){
+  stopifnot(length(sigma) == 1)
+  stopifnot(is.numeric(sigma))
+  stopifnot(sigma > 0)
+  sigma2 <- sigma^2
+  differential_entropy <- (1/2) * log2(2*pi*exp(1)*sigma2)
+  return(differential_entropy)
+}
+
+
+# Define Jensen-Shannon divergence function for Gaussian variables
+JSD_gaussian <- function(mu_P = NULL, sigma_P = NULL, mu_Q = NULL, sigma_Q = NULL, base = 2){
+  # Exception handling
+  stopifnot(length(mu_P) == 1)
+  stopifnot(is.numeric(mu_P))
+  stopifnot(length(sigma_P) == 1)
+  stopifnot(is.numeric(sigma_P))
+  stopifnot(sigma_P > 0)
+  stopifnot(length(mu_Q) == 1)
+  stopifnot(is.numeric(mu_Q))
+  stopifnot(length(sigma_Q) == 1)
+  stopifnot(is.numeric(sigma_Q))
+  stopifnot(sigma_Q > 0)
+  stopifnot(length(base) == 1)
+  stopifnot(is.numeric(base))
+  stopifnot(base > 0)
+  
+  # Define gaussian densities
+  p <- function(x) dnorm(x, mean = mu_P, sd = sigma_P)
+  q <- function(x) dnorm(x, mean = mu_Q, sd = sigma_Q)
+  m <- function(x) 0.5 * p(x) + 0.5 * q(x)
+  
+  # Define integrands
+  integrand_P <- function(x) {
+    px <- p(x)
+    mx <- m(x)
+    ifelse(px == 0, 0, 0.5 * px * log(px / mx, base = base))
+  }
+  integrand_Q <- function(x) {
+    qx <- q(x)
+    mx <- m(x)
+    ifelse(qx == 0, 0, 0.5 * qx * log(qx / mx, base = base))
+  }
+  
+  # Integrate
+  JS_P <- integrate(integrand_P, lower = -Inf, upper = Inf)$value
+  JS_Q <- integrate(integrand_Q, lower = -Inf, upper = Inf)$value
+  
+  return(JS_P + JS_Q)
+}
+
+
+# Define Jensen-Shannon distance estimator function for samples
+JSD <- function(p = NULL, q = NULL, n = 10000, epsilon = 1e-05, base = 2, type = c("Distance", "Divergence")){
+  # Exception handling
+  stopifnot(length(p) > 0)
+  stopifnot(length(q) > 0)
+  stopifnot(length(p)==length(q))
+  stopifnot(is.numeric(p))
+  stopifnot(is.numeric(q))
+  stopifnot(length(n) == 1)
+  stopifnot(is.numeric(n))
+  stopifnot(n > 1)
+  n <- ceiling(n)
+  stopifnot(length(epsilon) == 1)
+  stopifnot(is.numeric(epsilon))
+  stopifnot(epsilon > 0)
+  stopifnot(length(base) == 1)
+  stopifnot(is.numeric(base))
+  stopifnot(base > 0)
+  type <- match.arg(type)
+  
+  # Define a common grid
+  grid <- seq(min(c(p, q)), max(c(p, q)), length.out = n)
+  
+  # Use Kernsmooth::bkde to estimate densities on the same grid if available, use stats::density otherwise
+  if(requireNamespace("KernSmooth", quietly = TRUE)){
+    require(KernSmooth)
+    p_density <- KernSmooth::bkde(p, gridsize = n, range.x = c(min(c(p, q)), max(c(p, q))))$y
+    q_density <- KernSmooth::bkde(q, gridsize = n, range.x = c(min(c(p, q)), max(c(p, q))))$y
+  }
+  else{
+    p_density <- stats::density(p, bw = "SJ", kernel = "gaussian", from = min(grid), to = max(grid), n = length(grid))$y
+    q_density <- stats::density(q, bw = "SJ", kernel = "gaussian", from = min(grid), to = max(grid), n = length(grid))$y
+  }
+  
+  # Avoid any zeros
+  p_density <- pmax(p_density, epsilon)
+  q_density <- pmax(q_density, epsilon)
+  
+  # Ensure normalized densities
+  dx <- diff(grid)[1]
+  p_density <- p_density / sum(p_density * dx)
+  q_density <- q_density / sum(q_density * dx)
+  
+  # Compute mixture
+  m <- 0.5 * (p_density + q_density)
+  
+  # Compute JSD
+  jensen_shannon_divergence <- 0.5 * sum(p_density * log(p_density / m, base = base) * dx) +
+         0.5 * sum(q_density * log(q_density / m, base = base) * dx)
+  
+  # Output JSD
+  if(type == "Distance"){
+    jensen_shannon_distance <- sqrt(jensen_shannon_divergence)
+    return(jensen_shannon_distance)
+  }
+  else{
+    return(jensen_shannon_divergence)
+  }
+}
+```
+
+```{r simulate_priors, include = FALSE, eval = FALSE}
+# NOT RUN
+
+# Sample from the simulated priors using Monte Carlo
+simulated_priors <- data.frame(
+  prior1 = rnorm(posterior_samples, 0, 1),
+  prior2 = rnorm(posterior_samples, 0, 0.5),
+  prior3 = rnorm(posterior_samples, 1, 1),
+  prior4 = rnorm(posterior_samples, -2, 0.5)
+)
+
+# Save the sampled simulated priors
+write.csv(simulated_priors, "Data/simulated_priors.csv", row.names = FALSE)
+```
+
+```{r load_simulated_priors, include = FALSE}
+# Load simulated data
+simulated_priors <- readr::read_csv("Data/simulated_priors.csv") %>% as.data.frame()
+```
+
+```{r simulated_priors_plot, include = FALSE, eval = FALSE}
+# NOT RUN
+
+# Reform data into long form
+simulated_priors_long <- data.frame(
+  Distribution = factor(c(
+    rep("Prior \\#1", nrow(simulated_priors)),
+    rep("Prior \\#2", nrow(simulated_priors)),
+    rep("Prior \\#3", nrow(simulated_priors)),
+    rep("Prior \\#4", nrow(simulated_priors))
+  ), levels = c(
+    "Prior \\#1",
+    "Prior \\#2",
+    "Prior \\#3",
+    "Prior \\#4"
+    )
+  ),
+  Estimate = c(
+    simulated_priors$prior1,
+    simulated_priors$prior2,
+    simulated_priors$prior3,
+    simulated_priors$prior4
+  )
+)
+
+
+# Construct and save plot
+simulated_priors_plot <- ggplot(simulated_priors_long, aes(x = Estimate, fill = Distribution, color = Distribution, slab_linetype = Distribution)) +
+  facet_wrap(~ Distribution, scales = "free") +
+  stat_slab(aes(y = 0), alpha = .60, color = "black") +
+  stat_pointinterval(
+    aes(y = -0.1),
+    point_interval = "mode_hdci",
+    .width = .95,
+    outline_bars = FALSE,
+    color = "black",
+    fill = "black",
+    alpha = .70,
+    interval_size_range = c(.5, 2),
+    interval_size_domain = c(.1, 3.5)
+  ) +
+  stat_pointinterval(
+    aes(y = -0.1),
+    point_interval = "mode_hdci",
+    .width = .95,
+    outline_bars = FALSE,
+    alpha = .70,
+    interval_size_range = c(.5, 2)
+  ) +
+  labs(
+    x = "$\\hat{\\mu}$",
+    y = "Density"
+  ) +
+  scale_x_continuous(breaks = seq(-5, 5, 1)) +
+  scale_y_continuous(breaks = seq(0, 1, .2), limits = c(-.15, 1)) +
+  coord_cartesian(xlim = c(-5, 5)) +
+  theme(
+    axis.title.x = element_text(margin = ggplot2::margin(t = 10)),
+    axis.title.y = element_text(margin = ggplot2::margin(r = 10)),
+    legend.position = "none",
+    panel.grid.minor = element_blank()
+  ) +
+  guides(fill = "none", color = "none", slab_linetype = "none") +
+  theme_classic()
+tikz("Plots/simulated_priors_plot.tikz", standAlone = FALSE, width = 6.5, height = 4, sanitize = FALSE)
+print(simulated_priors_plot)   # render the ggplot
+dev.off()
+```
+
+```{r load_empirical_data, include = FALSE}
+
+# Load the empirical data
+# devtools::install_github("kosukeimai/qss-package", build_vignettes = TRUE)
+data(face, package = "qss")
+df <- face; rm(face)
+# dim(df) # 119 rows; 10 columns
+# colSums(is.na(df)) # 0 NAs
+
+
+# Process the data
+df <- df %>%
+  mutate(
+  d.share = d.votes / (d.votes + r.votes),
+  r.share = r.votes / (d.votes + r.votes),
+  d.diff.share = d.share - r.share,
+  d.diff.share = standardize2(d.diff.share),
+  d.comp = standardize2(d.comp)
+) %>%
+  select(d.comp, d.diff.share) %>%
+  rename(
+    democratic_competence = d.comp,
+    democratic_relative_support = d.diff.share
+  )
+
+
+# Save the data
+#write.csv(df, "Data/face.csv", row.names = FALSE)
+```
+
+```{r fit_model, include = FALSE, eval = FALSE}
+# NOT RUN
+
+# Specify the model
+democratic_relative_support_competence_model <- brms::bf(
+  democratic_relative_support ~ 0 + democratic_competence
+)
+
+
+# Specify the priors
+democratic_relative_support_competence_priors <- c(
+  brms::set_prior("normal(0, 0.1)", class = "b", lb = -1, ub = 1),
+  brms::set_prior("normal(1, 0.1)", class = "sigma", lb = 0, ub = 1)
+)
+
+
+# Fit the model
+t0 <- Sys.time()
+democratic_relative_support_competence_fit <- brms::brm(
+  democratic_relative_support_competence_model,
+  data = df,
+  prior = democratic_relative_support_competence_priors,
+  family = gaussian(
+    link = "identity"
+  ),
+  sample_prior = "yes",
+  cores = cores,
+  chains = chains,
+  seed = SEED,
+  iter = iter,
+  warmup = warmup,
+  control = list(adapt_delta = 0.99),
+  save_pars = save_pars(all = TRUE),
+  file = "Models/democratic_relative_support_competence_fit",
+  file_refit = "on_change"
+)
+t1 <- Sys.time()
+t1-t0
+# Model fitting took: 1.96 mins
+# summary(democratic_relative_support_competence_fit)
+
+
+# Frequentist likelihood-based analysis for comparison
+t0 <- Sys.time()
+democratic_relative_support_competence_likelihood_fit <- brms::brm(
+  democratic_relative_support_competence_model,
+  data = df,
+  prior = c(
+    brms::set_prior("", class = "b", lb = -1, ub = 1),
+    brms::set_prior("", class = "sigma", lb = 0, ub = 1)
+  ),
+  family = gaussian(
+    link = "identity"
+  ),
+  sample_prior = "no",
+  cores = cores,
+  chains = chains,
+  seed = SEED,
+  iter = iter,
+  warmup = warmup,
+  control = list(adapt_delta = 0.99),
+  save_pars = save_pars(all = TRUE),
+  file = "Models/democratic_relative_support_competence_likelihood_fit",
+  file_refit = "on_change"
+)
+t1 <- Sys.time()
+t1-t0
+# Model fitting took: 1.85 mins
+# summary(democratic_relative_support_competence_likelihood_fit)
+```
+
+```{r load_model, include = FALSE}
+
+# Load model
+democratic_relative_support_competence_fit <- readRDS("Models/democratic_relative_support_competence_fit.rds")
+
+
+# Get draws
+democratic_relative_support_competence_draws <- brms::as_draws_df(democratic_relative_support_competence_fit)
+b_democratic_competence_posterior <- democratic_relative_support_competence_draws$b_democratic_competence
+b_democratic_competence_prior <- democratic_relative_support_competence_draws$prior_b
+sigma_prior <- democratic_relative_support_competence_draws$prior_sigma
+sigma_posterior <- democratic_relative_support_competence_draws$sigma
+
+
+
+# Load likelihood model
+democratic_relative_support_competence_likelihood_fit <- readRDS("Models/democratic_relative_support_competence_likelihood_fit.rds")
+
+
+# Get likelihood draws
+democratic_relative_support_competence_likelihood_draws <- brms::as_draws_df(democratic_relative_support_competence_likelihood_fit)
+b_democratic_competence_likelihood <- democratic_relative_support_competence_likelihood_draws$b_democratic_competence
+sigma_likelihood <- democratic_relative_support_competence_likelihood_draws$sigma
+```
+
+```{r check_model, include = FALSE, eval = FALSE}
+# NOT RUN
+
+# Specify colors used for traceplots
+traceplot_color_chart <- Polychrome::palette36.colors(cores) %>% as.vector()
+
+
+# Assess Rhat of the Prior and Posterior
+democratic_relative_support_competence_fit_rhat <- brms::rhat(democratic_relative_support_competence_fit)
+all(democratic_relative_support_competence_fit_rhat < 1.01) # TRUE: All Rhat less than 1.01
+
+
+# Assess ESS Bulk of the Prior and Posterior
+democratic_relative_support_competence_draws_array <- brms::as_draws_array(democratic_relative_support_competence_fit)
+democratic_relative_support_competence_ess_bulk <- apply(democratic_relative_support_competence_draws_array, 3, rstan::ess_bulk)
+min(democratic_relative_support_competence_ess_bulk) # All ESS Bulk equal to or greater than 10,598
+
+
+# Assess ESS Tail of the Prior and Posterior
+democratic_relative_support_competence_ess_tail <- apply(democratic_relative_support_competence_draws_array, 3, rstan::ess_tail)
+min(democratic_relative_support_competence_ess_tail) # All ESS Bulk equal to or greater than 8,204
+
+
+# Assess MCSE of the Prior and Posterior
+democratic_relative_support_competence_mcse <- apply(democratic_relative_support_competence_draws_array, 3, mcse)
+max(democratic_relative_support_competence_mcse) # All MCSE equal to or less than 0.0145
+
+
+# Assess Traceplots of the Posterior and Prior
+democratic_relative_support_competence_fit %>%
+bayesplot::mcmc_trace(pars = c("b_democratic_competence", "sigma", "prior_b", "prior_sigma"), n_warmup = warmup, np = nuts_params(democratic_relative_support_competence_fit)) +
+  theme_classic() +
+  scale_color_manual(values = traceplot_color_chart) +
+  scale_fill_manual(values = traceplot_color_chart) +
+  labs(
+    color = "Chain"
+  )
+
+
+
+# Assess Rhat of the Likelihood
+democratic_relative_support_competence_likelihood_fit_rhat <- brms::rhat(democratic_relative_support_competence_likelihood_fit)
+all(democratic_relative_support_competence_likelihood_fit_rhat[c("b_democratic_competence", "sigma")] < 1.01) # TRUE: All Rhat less than 1.01
+
+
+# Assess ESS Bulk of the Likelihood
+democratic_relative_support_competence_likelihood_draws_array <- brms::as_draws_array(democratic_relative_support_competence_likelihood_fit)
+democratic_relative_support_competence_likelihood_ess_bulk <- apply(democratic_relative_support_competence_likelihood_draws_array, 3, rstan::ess_bulk)
+min(democratic_relative_support_competence_likelihood_ess_bulk[c("b_democratic_competence", "sigma")]) # All ESS Bulk equal to or greater than 10,181
+
+
+# Assess ESS Tail of the Likelihood
+democratic_relative_support_competence_likelihood_ess_tail <- apply(democratic_relative_support_competence_likelihood_draws_array, 3, rstan::ess_tail)
+min(democratic_relative_support_competence_likelihood_ess_tail[c("b_democratic_competence", "sigma")]) # All ESS Bulk equal to or greater than 7,643
+
+
+# Assess MCSE of the Likelihood
+democratic_relative_support_competence_likelihood_mcse <- apply(democratic_relative_support_competence_likelihood_draws_array, 3, mcse)
+max(democratic_relative_support_competence_likelihood_mcse[c("b_democratic_competence", "sigma")]) # All MCSE equal to or less than 0.000677
+
+
+# Assess Traceplots of the Likelihood
+democratic_relative_support_competence_likelihood_fit %>%
+bayesplot::mcmc_trace(pars = c("b_democratic_competence", "sigma"), n_warmup = warmup, np = nuts_params(democratic_relative_support_competence_fit)) +
+  theme_classic() +
+  scale_color_manual(values = traceplot_color_chart) +
+  scale_fill_manual(values = traceplot_color_chart) +
+  labs(
+    color = "Chain"
+  )
+
+
+# Posterior predictive check
+democratic_relative_support_competence_posterior_predictions <- brms::posterior_predict(democratic_relative_support_competence_fit, ndraws = 100, cores = cores)
+bayesplot::pp_check(as.vector(df$democratic_relative_support), democratic_relative_support_competence_posterior_predictions, ppc_dens_overlay)
+
+
+# Posterior predictive p-value
+democratic_relative_support_competence_posterior_predictions <- brms::posterior_predict(democratic_relative_support_competence_fit, ndraws = 10000, cores = cores)
+democratic_relative_support_competence_ppp <- HuraultMisc::post_pred_pval(yrep = democratic_relative_support_competence_posterior_predictions, y = as.vector(df$democratic_relative_support))
+write.csv(democratic_relative_support_competence_ppp, "Results/model_pppval.csv", row.names = FALSE)
+
+
+# Explanatory power
+democratic_relative_support_competence_R2 <- brms::bayes_R2(democratic_relative_support_competence_fit, summary = FALSE)
+write.csv(democratic_relative_support_competence_R2, "Results/model_R2.csv", row.names = FALSE)
+```
+
+```{r load_model_pppval, include = FALSE}
+
+# Load ppp and R2
+democratic_relative_support_competence_ppp <- read.csv("Results/model_pppval.csv")$pval
+democratic_relative_support_competence_R2 <- read.csv("Results/model_R2.csv")$R2
+
+
+# Compute most credible R2 interpretation
+democratic_relative_support_competence_R2_interpretation <- democratic_relative_support_competence_R2 %>% effectsize::interpret_r2() %>% modal()
+
+
+# Summarize R2
+democratic_relative_support_competence_R2_summary <- paste0(
+  mean(democratic_relative_support_competence_R2) %>% round_down(digits = digits$text),
+  " (SD = ",
+  sd2(democratic_relative_support_competence_R2) %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  bayestestR::hdi(democratic_relative_support_competence_R2)$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  bayestestR::hdi(democratic_relative_support_competence_R2)$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+```
+
+```{r summarize_model, include = FALSE}
+
+# Summarize coefficient
+b_democratic_competence_prior_summary <- paste0(
+  mean(b_democratic_competence_prior) %>% round_down(digits = digits$text),
+  " (SD = ",
+  sd2(b_democratic_competence_prior) %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  bayestestR::hdi(b_democratic_competence_prior)$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  bayestestR::hdi(b_democratic_competence_prior)$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+b_democratic_competence_posterior_summary <- paste0(
+  mean(b_democratic_competence_posterior) %>% round_down(digits = digits$text),
+  " (SD = ",
+  sd2(b_democratic_competence_posterior) %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  bayestestR::hdi(b_democratic_competence_posterior)$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  bayestestR::hdi(b_democratic_competence_posterior)$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+
+
+# Compute most credible coefficient interpretation
+b_democratic_competence_posterior_interpretation <- b_democratic_competence_posterior %>% effectsize::interpret_r() %>% modal()
+
+
+# Load and summarize Frequentist, likelihood-based fit
+# democratic_relative_support_competence_frequentist_fit <- read.csv("Results/democratic_relative_support_competence_frequentist_fit.csv")
+b_democratic_competence_likelihood_summary <- paste0(
+  b_democratic_competence_likelihood %>% mean() %>% round_down(digits = digits$text),
+  " (SD = ",
+  b_democratic_competence_likelihood %>% sd2() %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  {b_democratic_competence_likelihood %>% bayestestR::hdi()}$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  {b_democratic_competence_likelihood %>% bayestestR::hdi()}$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+
+
+# Summarize Bayesian and Frequentist difference
+b_democratic_competence_difference <- b_democratic_competence_posterior - b_democratic_competence_likelihood
+b_democratic_competence_difference_summary <- paste0(
+  "$\\Delta\\hat{\\beta}_C =$ ",
+  b_democratic_competence_difference %>% mean() %>% round_down(digits = digits$text),
+  "; SD = ",
+  b_democratic_competence_difference %>% sd2() %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  {b_democratic_competence_difference %>% bayestestR::hdi()}$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  {b_democratic_competence_difference %>% bayestestR::hdi()}$CI_high %>% round_up(digits = digits$text),
+  "]"
+)
+
+
+# Summarize posterior and prior difference
+b_democratic_competence_posterior_prior_difference <- b_democratic_competence_posterior - b_democratic_competence_prior
+b_democratic_competence_posterior_prior_difference_summary <- paste0(
+  "$\\Delta\\hat{\\beta}_C =$ ",
+  b_democratic_competence_posterior_prior_difference %>% mean() %>% round_down(digits = digits$text),
+  " (SD = ",
+  b_democratic_competence_posterior_prior_difference %>% sd2() %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  {b_democratic_competence_posterior_prior_difference %>% bayestestR::hdi()}$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  {b_democratic_competence_posterior_prior_difference %>% bayestestR::hdi()}$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+
+
+# Summarize prior and posterior RMSE
+sigma_prior_summary <- paste0(
+  mean(sigma_prior) %>% round_up(digits = digits$text),
+  " (SD = ",
+  sd2(sigma_prior) %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  bayestestR::hdi(sigma_prior)$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  bayestestR::hdi(sigma_prior)$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+sigma_posterior_summary <- paste0(
+  mean(sigma_posterior) %>% round_up(digits = digits$text),
+  " (SD = ",
+  sd2(sigma_posterior) %>% round_up(digits = digits$text),
+  "; 95% HDI[",
+  bayestestR::hdi(sigma_posterior)$CI_low %>% round_down(digits = digits$text),
+  "; ",
+  bayestestR::hdi(sigma_posterior)$CI_high %>% round_up(digits = digits$text),
+  "])"
+)
+```
+
+```{r compute_JS_divergence, include = FALSE, eval = FALSE}
+# NOT RUN
+
+# Compute JS divergence using the density estimator and the non-parametric bootstrap with parallel processing and save
+t0 <- Sys.time()
+results_JS_divergence <- foreach::foreach(i = 1:1000, .combine = "rbind") %dopar% {
+  # Draw a bootstrap sample from the prior and posterior
+  b_democratic_competence_prior_i <- b_democratic_competence_prior[sample(1:length(b_democratic_competence_prior), length(b_democratic_competence_prior), replace = TRUE)]
+  
+  b_democratic_competence_posterior_i <- b_democratic_competence_posterior[sample(1:length(b_democratic_competence_posterior), length(b_democratic_competence_posterior), replace = TRUE)]
+  
+  sigma_prior_i <- sigma_prior[sample(1:length(sigma_prior), length(sigma_prior), replace = TRUE)]
+  
+  sigma_posterior_i <- sigma_posterior[sample(1:length(sigma_posterior), length(sigma_posterior), replace = TRUE)]
+  
+  
+  return(data.frame(
+    b_democratic_competence = JSD(b_democratic_competence_prior_i, b_democratic_competence_posterior_i, type = "Divergence"),
+    sigma = JSD(sigma_prior_i, sigma_posterior_i, type = "Divergence")
+  ))
+}
+t1 <- Sys.time()
+t1-t0
+# Estimation time: 3.92 secs
+write.csv(results_JS_divergence, "Results/results_JS_divergence.csv", row.names = FALSE)
+
+
+# Compute JS divergence parametrically and using the non-parametric bootstrap with parallel processing and save
+t0 <- Sys.time()
+results_JSD_gaussian <- foreach::foreach(i = 1:1000, .combine = "rbind") %dopar% {
+  # Draw a bootstrap sample from the prior and posterior
+  b_democratic_competence_prior_i <- b_democratic_competence_prior[sample(1:length(b_democratic_competence_prior), length(b_democratic_competence_prior), replace = TRUE)]
+  
+  b_democratic_competence_posterior_i <- b_democratic_competence_posterior[sample(1:length(b_democratic_competence_posterior), length(b_democratic_competence_posterior), replace = TRUE)]
+  
+  sigma_prior_i <- sigma_prior[sample(1:length(sigma_prior), length(sigma_prior), replace = TRUE)]
+  
+  sigma_posterior_i <- sigma_posterior[sample(1:length(sigma_posterior), length(sigma_posterior), replace = TRUE)]
+  
+  
+  return(data.frame(
+    b_democratic_competence = JSD_gaussian(mean(b_democratic_competence_prior_i), sd(b_democratic_competence_prior_i), mean(b_democratic_competence_posterior_i), sd(b_democratic_competence_posterior_i)),
+    sigma = JSD_gaussian(mean(sigma_prior_i), sd(sigma_prior_i), mean(sigma_posterior_i), sd(sigma_posterior_i))
+  ))
+}
+t1 <- Sys.time()
+t1-t0
+# Estimation time: 2 secs
+write.csv(results_JSD_gaussian, "Results/results_JSD_gaussian.csv", row.names = FALSE)
+```
+
+```{r load_JS_divergence, include = FALSE}
+
+# Load JS divergences
+results_JS_divergence <- read.csv("Results/results_JS_divergence.csv")
+b_democratic_competence_JS_divergence <- results_JS_divergence$b_democratic_competence
+sigma_JS_divergence <- results_JS_divergence$sigma
+
+
+# Convert to JS distances
+b_democratic_competence_JS_distance <- b_democratic_competence_JS_divergence %>% sqrt()
+sigma_JS_distance <- sigma_JS_divergence %>% sqrt()
+
+
+# Compute summaries
+b_democratic_competence_JS_divergence_summary <- paste0(
+      b_democratic_competence_JS_divergence %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", b_democratic_competence_JS_divergence %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {b_democratic_competence_JS_divergence %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {b_democratic_competence_JS_divergence %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+b_democratic_competence_JS_distance_summary <- paste0(
+      b_democratic_competence_JS_distance %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", b_democratic_competence_JS_distance %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {b_democratic_competence_JS_distance %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {b_democratic_competence_JS_distance %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+sigma_JS_distance_summary <- paste0(
+      sigma_JS_distance %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", sigma_JS_distance %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {sigma_JS_distance %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {sigma_JS_distance %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+
+
+
+# Load JSD gaussian estimates
+results_JSD_gaussian <- read.csv("Results/results_JSD_gaussian.csv")
+b_democratic_competence_JS_divergence_gaussian <- results_JSD_gaussian$b_democratic_competence
+sigma_JS_divergence_gaussian <- results_JSD_gaussian$sigma
+
+
+# Convert to JS distances
+b_democratic_competence_JS_distance_gaussian <- b_democratic_competence_JS_divergence_gaussian %>% sqrt()
+sigma_JS_distance_gaussian <- sigma_JS_divergence_gaussian %>% sqrt()
+
+
+# Compute summaries for the parametric approach
+b_democratic_competence_JS_divergence_gaussian_summary <- paste0(
+      b_democratic_competence_JS_divergence_gaussian %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", b_democratic_competence_JS_divergence_gaussian %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {b_democratic_competence_JS_divergence_gaussian %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {b_democratic_competence_JS_divergence_gaussian %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+b_democratic_competence_JS_distance_gaussian_summary <- paste0(
+      b_democratic_competence_JS_distance_gaussian %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", b_democratic_competence_JS_distance_gaussian %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {b_democratic_competence_JS_distance_gaussian %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {b_democratic_competence_JS_distance_gaussian %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+sigma_JS_distance_gaussian_summary <- paste0(
+      sigma_JS_distance_gaussian %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", sigma_JS_distance_gaussian %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {sigma_JS_distance_gaussian %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {sigma_JS_distance_gaussian %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+
+
+# Compute difference between the non-parametric and parametric approaches
+b_democratic_competence_JS_distance_difference <- b_democratic_competence_JS_distance - b_democratic_competence_JS_distance_gaussian
+b_democratic_competence_JS_distance_difference_summary <- paste0(
+      b_democratic_competence_JS_distance_difference %>% mean() %>% round_down(digits = digits$table),
+      " (SE = ", b_democratic_competence_JS_distance_difference %>% sd() %>% round_down(digits = digits$table),
+      "; 95% BCaI[", {b_democratic_competence_JS_distance_difference %>% bayestestR::bcai()}$CI_low %>% round_down(digits = digits$table),
+      "; ", {b_democratic_competence_JS_distance_difference %>% bayestestR::bcai()}$CI_high %>% round_up(digits = digits$table), "])"
+    )
+```
+
+```{r results_table, include = FALSE}
+
+# Compute Rhat, ESS bulk, and MCSE
+democratic_relative_support_competence_fit_rhat <- brms::rhat(democratic_relative_support_competence_fit)
+democratic_relative_support_competence_draws_array <- brms::as_draws_array(democratic_relative_support_competence_fit)
+democratic_relative_support_competence_ess_bulk <- apply(democratic_relative_support_competence_draws_array, 3, rstan::ess_bulk)
+democratic_relative_support_competence_mcse <- apply(democratic_relative_support_competence_draws_array, 3, mcse)
+
+
+# Construct results table
+results_table <- data.frame(
+  parameter = c(
+    "$\\hat{\\beta}_C$",
+    "$\\hat{\\sigma}$"
+  ),
+  estimate = c(
+    b_democratic_competence_posterior_summary,
+    sigma_posterior_summary
+  ),
+  rhat = c(
+    democratic_relative_support_competence_fit_rhat[names(democratic_relative_support_competence_fit_rhat) == "b_democratic_competence"] %>% round_up(digits = digits$table),
+    democratic_relative_support_competence_fit_rhat[names(democratic_relative_support_competence_fit_rhat) == "sigma"] %>% round_up(digits = digits$table)
+  ),
+  mcse = c(
+    democratic_relative_support_competence_mcse[names(democratic_relative_support_competence_mcse) == "b_democratic_competence"] %>% round_up(digits = digits$table),
+    democratic_relative_support_competence_mcse[names(democratic_relative_support_competence_mcse) == "sigma"] %>% round_up(digits = digits$table)
+  ),
+  ess = c(
+    democratic_relative_support_competence_ess_bulk[names(democratic_relative_support_competence_ess_bulk) == "b_democratic_competence"] %>% qformat(),
+    democratic_relative_support_competence_ess_bulk[names(democratic_relative_support_competence_ess_bulk) == "sigma"] %>% qformat()
+  ),
+  prior = c(
+    b_democratic_competence_prior_summary,
+    sigma_prior_summary
+  ),
+  surprise = c(
+    b_democratic_competence_JS_distance_summary,
+    sigma_JS_distance_summary
+  )
+)
+```
+
+```{r create_plot2, include = FALSE, eval = FALSE}
+# NOT RUN
+
+# Construct df to compare sampled prior and posterior
+democratic_relative_support_competence_prior_posterior_df <- data.frame(
+  Distribution = factor(
+    c(
+      rep("Prior", length(b_democratic_competence_prior)),
+      rep("Posterior", length(b_democratic_competence_posterior))
+    ),
+    levels = c("Prior", "Posterior")
+  ),
+  Estimate = c(
+    b_democratic_competence_prior,
+    b_democratic_competence_posterior
+  )
+)
+
+
+# Construct and save plot with prior and posterior
+democratic_relative_support_competence_prior_posterior_plot <- democratic_relative_support_competence_prior_posterior_df %>% ggplot(aes(x = Estimate, group = Distribution, fill = Distribution, color = Distribution, slab_linetype = Distribution, shape = Distribution)) +
+  stat_slab(aes(y = 0), alpha = .60, color = "black") +
+  stat_pointinterval(
+    aes(y = -0.1),
+    point_interval = "mode_hdci",
+    .width = .95,
+    outline_bars = FALSE,
+    color = "black",
+    fill = "black",
+    alpha = .70,
+    interval_size_range = c(.5, 2),
+    interval_size_domain = c(.1, 3.5)
+  ) +
+  stat_pointinterval(
+    aes(y = -0.1),
+    point_interval = "mode_hdci",
+    .width = .95,
+    outline_bars = FALSE,
+    alpha = .70,
+    interval_size_range = c(.5, 2)
+  ) +
+  labs(
+    x = "$\\hat{\\beta}_C$",
+    y = "Density"
+  ) +
+  scale_x_continuous(breaks = seq(-1, 1, .2)) +
+  scale_y_continuous(breaks = seq(0, 1, .1), limits = c(-.15, 1)) +
+  coord_cartesian(xlim = c(-1, 1)) +
+  theme(
+    axis.title.x = element_text(margin = ggplot2::margin(t = 10)),
+    axis.title.y = element_text(margin = ggplot2::margin(r = 10))
+  ) +
+  scale_color_manual(values = c("#d62728", "#1f77b4")) +
+  scale_fill_manual(values = c("#d62728", "#1f77b4")) + 
+  theme_classic()
+tikz("Plots/democratic_relative_support_competence_prior_posterior_plot.tikz", standAlone = FALSE, width = 6.5, height = 4, sanitize = FALSE)
+print(democratic_relative_support_competence_prior_posterior_plot)   # render the ggplot
+dev.off()
+```
+
+\vspace{5em}
+
+**Keywords**: *Surprise; Novelty; Jensen-Shannon distance; JS distance; Jensen-Shannon divergence; JS divergence; Relative entropy; Kullback-Leibler divergence; KL divergence; Distance; Divergence; Dissimilarity; Differential entropy; Entropy; $p$-value; $S$-value; Information theory; Bayesian inference*
+
+\newpage
+
+```{=latex}
+\section{Introduction}\label{sec:introduction}
+
+Assessing how surprising the results of a study are is an important yet theoretically vague procedure within the social sciences. Generally, for a research paper to be deemed worthy of publication in a peer-reviewed scientific journal, besides adhering to standards on rigor and replicability (\citealp{Christensenetal2019, Shaughnesseyetal2015, Toshkov2016}), its results should ideally be \textit{surprising} (or novel) when compared to expectations based on intuition or theory (\citealp{FrenchAndMurphy2023, Morgan2005, Wangetal2024}). This preference for surprise/novelty could be attributed to the belief that scientific studies should serve to produce knowledge relevant for solving societal problems (\citealp{BuunkAndVanvugt2013, Lugg1979}), which implies a limitation of current problem-solving capabilities and thus the need for a study to acquire \textit{new} and improved knowledge. Similarly, from the perspective of editors, if the goal is to increase the readership of a journal, novelty may be preferred, since surprising results are more likely to attract attention and engage readers (cf. \citealp{IttiAndBaldi2009}). To thus avoid their research collecting dust in the file-drawer (cf. \citealp{Rosenthal1979}), the surprise of results becomes an important factor for researchers to assess and emphasize in order to increase its perceived relevance and chances of publication.
+
+\parindent=2em Recognizing this preference, the scientific community has tried to standardize and quantify novelty (e.g., \citealp{Modirshanechietal2021, Wangetal2024}), but despite their best efforts, there is currently no broad consensus, leaving different fields to rely on different solutions (\citealp{Wangetal2024}). Within the social sciences, this has lead to the development of informal practices for assessing novelty, with particularly the (in)famous $p$-value currently serving as a popular heuristic. Here, the $p$-value is effectively treated as a measure of surprise, since the results are informally deemed 'surprising' if it is smaller than some common threshold (e.g., $p \leq 0.05$).
+
+However, using the $p$-value as a measure of novelty can be shown to be inappropriate given its conceptualization and mathematical properties. Specifically, it can be made evident that almost any result becomes 'surprising' given a sufficiently large sample size, irrespective of how derivative the results actually are when compared to the expectations of intuition or existing theory. Misleading conclusions about the novelty of results are thus abound to incur from this informal practice, and it therefore constitutes an issue for the social sciences that may lead to incorrect decisions in relation to assessments of relevance and publication.
+
+To solve this issue, this paper argues for the need to adopt a formal (re)conceptualization of surprise within the social sciences. Building on Bayesian inference (\citealp{Gelmanetal2014}) and Information theory (\citealp{CoverAndThomas2006}), it is recognized that \textit{knowledge} and \textit{information} are indistinguishable and ultimately nothing more than \textit{(inter-)subjective beliefs}. From this, expectations based in theory about the results of a study can be characterized as \textit{prior} knowledge, while the actual results given the data can be characterized as \textit{posterior} knowledge. Consistent with \citeauthor{KullbackAndLeibler1951} (\citeyear{KullbackAndLeibler1951}), \textit{relative entropy} can then be used to describe the divergence between these states of knowledge. Specifically, it enables a theoretically-coherent, formal conceptualization of surprise as \textit{the relative entropy between prior and posterior knowledge}. As demonstrated in relation to empirical data, the degree of surprise can then be appropriately measured based on the \textit{Jensen-Shannon distance} (\citealp{Lin1991}), which possesses numerous advantages that make it particularly suited for the social sciences. By arguing for this conceptualization, the paper thus adds to the growing interdisciplinary literature that calls for formally conceptualizing surprise in accordance with Bayesian inference and Information theory (e.g., \citealp{BencomoAndBelaggoun2014, Burkhartetal2025, BurnhamAndAnderson2001, IttiAndBaldi2009, Melloetal2025, Seeharsetal2014}).
+
+For the purposes of achieving this solution, the paper is structured as the following: Following this introduction (Section \ref{sec:introduction}), the paper considers the existing problem within the social sciences by reviewing the current, informal conceptualization of surprise and the implicit (mis)use of the $p$-value as an indicator of surprise within the social science literature (Section \ref{sec:problem}). The paper then builds towards a solution by presenting concepts central to Bayesian inference and Information theory, incorporating them into a formal conceptualization that defines surprise as the relative entropy between prior and posterior knowledge, measurable as the Jensen-Shannon distance (Section \ref{sec:solution}). A formal assessment of surprise using this conceptualization is then demonstrated in relation to empirical data (Section \ref{sec:demonstration}), where surprise is quantified using a practical implementation of the Jensen-Shannon distance for the popular $\textsf{R}$ programming language (\citealp{RCoreTeam2025}), made freely available in the Appendix. The uses and limitations of this solution are discussed (Section \ref{sec:discussion}), before the paper is concluded (Section \ref{sec:conclusion}).
+```
+
+```{=latex}
+\section{Problem}\label{sec:problem}
+
+To build towards a formal conceptualization of surprise as the relative entropy between prior and posterior knowledge, this section first covers the current, informal definition of surprise within the social sciences (Section \ref{sec:problem_surprise}), before reviewing the conceptualization and mathematical properties of the $p$-value that make it an inappropriate measure of surprise (Section \ref{sec:problem_pvalue}). Consistent with related literature (e.g., \citealp{IttiAndBaldi2009}), novelty and surprise are treated as synomous throughout the paper.
+```
+
+```{=latex}
+\subsection{Surprise, informally}\label{sec:problem_surprise}
+
+In layman's terms, \textit{surprise} can generally be defined as a reaction 'caused by something unexpected happening' (\citealp{CambridgeDictionary2025}). While this definition is consistent with many researchers' application of the term (cf. \citealp{IttiAndBaldi2009, IvanovaAndVaidyanathan2024}), including social science researchers (e.g., \citealp{Alfordetal2011}: 362; \citealp{GorenAndChapp2017}: 124; \citealp{PetersenAndLaustsen2019}: 26), it can be argued to be too vague to constitute a formal scientific conceptualization that can be reduced to a mathematical formula. This means that social science researchers are generally left to assess novelty by relying on intuition and qualitative evaluation. Usage of this term by researchers can nonetheless be briefly analyzed as a starting point to understand what a proper conceptualization for the social sciences will require.
+
+That surprise is a reaction to the unexpected is implicitly recognized by social science researchers, where an analysis reveals that it primarily occurs within this discipline due to a \textit{discrepancy between results and predictions made about those results based in theory}. Here, predictions are generally formalized as \textit{hypotheses} about a parameter of interest (\citealp{Shaughnesseyetal2015, Toshkov2016}), whose theoretical basis may range from weak (e.g., intuition-based) to strong (e.g., well-established theory). That surprise occurs due to such discrepancy is made evident by statistically discernible differences between expectations and results almost ubiquitously being referred to as 'surprising' and deemed worthy of discussion. For example, \cite{Cochraneetal1979} studied the political values of individuals in British neighborhoods with door-to-door interviews, and based on theory by \cite{Rokeach1973}, they expected individuals with different political ideologies (e.g., liberals, communists, fascists) to differ in their prioritization of freedom. Instead, they found that individuals across all ideologies prioritized freedom similarly (though see also, e.g., \citealp{Mahoneyetal1984}), and this unexpected discrepancy between the predictions by \cite{Rokeach1973} and the results by \citeauthor{Cochraneetal1979} (\citeyear{Cochraneetal1979}) were discussed and later explicitly referred to as 'surprising' by other researchers (e.g., \citealp{Sterlingetal2019}: 2). This suggests that surprise can informally be characterized as the discrepancy between results and theory, and a formal conceptualization suited for the social sciences would thus need to reflect this property.
+
+At the same time, it is also implicitly recognized that surprise is \textit{not} an absolute size but always entirely \textit{relative} to the predictions of the theory to which results are being compared. This is made evident by researchers recognizing that results may be surprising when evaluated against one theory but also entirely unsurprising when compared to another. For example, \cite{Osmundsenetal2021} investigated the behavior of American individuals on the social media \href{https://x.com/}{\textit{X}} (then known as \textit{Twitter}). In contrast to the expectations of \textit{ignorance theory}, where fake news sharing would expectedly be attributable to individuals being unable to discern between true and fake information (\citealp{Osmundsenetal2021}: 1001; based on \citealp{Altayetal2020, PennycookAndRand2019, Pennycooketal2020}), the authors instead found it better explained as based in hostility towards political opponents, which fits expectations based in the \textit{negative partisanship} literature (\citealp{Osmundsenetal2021}: 1012; see \citealp{AbramowitzAndWebster2018}). This points to an appropriate conceptualization of surprise thus needing to account for it being \textit{relative} to the different theories that results can be compared against.
+
+Finally, surprise is informally deemed sufficient to justify revisions, if not discardment, of theory. For example, in the discussion of the previously noted study by \cite{Osmundsenetal2021}, they use their results to argue for revising future expectations about fake news sharing, stating that 'If people care primarily about a story's ability to hurt political enemies, we should \textit{not} be surprised if fact checking fails to reduce sharing.' (\citealp{Osmundsenetal2021}: 1013, emphasis added) This corroborates the aforementioned notion that surprise reflects a discrepancy between results and predictions that occur due to the \textit{epistemic limitations} of the theory underlying those predictions (cf. \citealp{FrenchAndMurphy2023}: 1448-1449). Because revisions of a theory, or discardment of a theory in favor of another, can bring expectations in greater alignment with current results, future results based on similar data should accordingly be less surprising. Basing revisions or discardment upon surprise is thus justified and fits the self-correcting ideal of science\footnote{Indeed, at least in a deterministic world, a researcher making predictions using a theory with perfect explanatory power will never by surprised by the results (\citealp{IttiAndBaldi2009}). As a note of reference, it may thus be stated that \citeauthor{Laplace1951}'s (\citeyear{Laplace1951}) \textit{demon} should be incapable of being surprised. For arguments against a deterministic world, see, for example, \cite{Masi2023}.} (e.g., as based on \textit{verisimilitude}; \citealp{Miller1974, Popper2002}; see also \citealp{Dellsen2024, Lakatos1970}). A measure of surprise should thus enable researchers to motivate revisions or discardment of theory, making it quite useful for guiding scientific progress.
+
+Based on these initial considerations, it is apparant that the social sciences lack a formal conceptualization and quantitative measurement of surprise. However, based on an analysis of its common usage, it has become clear that it is nevertheless informally recognized to reflect a discrepancy between results and predictions derived from theory, with surprise being relative to, and co-evolving with, theory. Similarly, higher degrees of surprise are recognized as indicative of the limitations of a theory, which may be used to motivate its revision or discardment. These insights are important for any proper, formal conceptualization and measurement of surprise within the social sciences, since it will need to account for all of these characteristics to better fit the established practices of this discipline. While some may argue that a vague conceptualization of surprise is sufficient for the social sciences, this lack of formality, as argued in the following section, has likely resulted in the inappropriate practice of relying on the $p$-value to implicitly assess surprise.
+```
+
+```{=latex}
+\subsection{\textit{p}-value}\label{sec:problem_pvalue}
+
+In the classical statistical framework, also known as the \textit{Frequentist} approach (for an introductory text, see, e.g., \citealp{Agresti2018}), the \textit{probability value} (i.e., $p$-value) denotes \textit{the probability of at least as extreme an estimated parameter value from the sample given that the null-hypothesis about that population parameter is true} (\citealp{Clayton2021}: 291). To understand why it is an inappropriate measure of surprise, some conceptual understanding of this dense definition is required, which can be provided in brief.
+
+The \textit{p}-value is conceptually part of the \textit{Null-Hypothesis Significance Testing} procedure (NHST; \citealp{Cohen1994}; \citealp{Field2018}: 72-82; \citealp{Kruschke2014}: 297-334), which involves the researcher formulating a \textit{null-hypothesis} (i.e., $H_0$) about a \textit{parameter in a population of interest} (i.e., $\theta$), which typically takes the form of a \textit{nil hypothesis} by stating that the parameter is \textit{exactly} zero (i.e., $H_0: \theta = 0$; \citealp{Cohen1994}: 999-1000). This null-hypothesis contrasts an \textit{alternative hypothesis} (i.e., $H_a$) about the population parameter that the researcher has derived from theory. By convention, $H_a$ takes the form of a complementary non-nil hypothesis (e.g., $H_a: \theta \neq 0$), which unfortunately seldom reflects any substantive prediction of said theory (cf. \citealp{Meehl1967}).
+
+In line with \textit{hypothetico-deductive reasoning} (\citealp{Popper2002}), the purpose of NHST is then to build confidence for $H_a$ through attempts at falsifying $H_0$. This is accomplished by collecting a sample of a prespecified, sufficiently large size that is representative of a larger population of interest. From this data, a mathematical formula known as an \textit{estimator} (\citealp{StockAndWatson2019}: 105; \citealp{Wooldridge2019}: 715-721) is then used to provide an estimate of $\theta$ in the population based on the collected data. The estimated parameter from that sample (i.e., $\hat{\theta}_s$) is then compared to the \textit{sampling distribution} of its estimator (i.e., $\hat{\theta}$; \citealp{Field2018}: 61-64), which is a distribution of hypothetical estimates derived from an infinite number of counterfactual random samples taken from that population, where $H_0$ is true. Since Frequentists define probability as \textit{the long-run relative frequency} (\citealp{Agresti2018}: 79), the $p$-value is accordingly calculated as the area under the curve in this sampling distribution of $\hat{\theta}$ that is at least as extreme as $\hat{\theta}_s$. If the $p$-value is lower than some threshold (i.e., $\alpha$) specified before analyzing the data (e.g., $\alpha = 0.05$, with $p \leq \alpha$) then $H_0$ is rejected at that level. This would be consistent with $H_a$ being true, and since the estimated parameter can account for \textit{sampling uncertainty}, it can be referred to as being 'statistically discernible'\footnote{Instead of the term 'statistically discernible', researchers often use the less appropriate, but more popular, term 'statistically significant', or just 'significant'. This is inappropriate, in part, because it constitutes an instance of \textit{semantic overload} (cf. \citealp{Bolinger1971}), with this wording specifically alluding to the estimate being of any substantive size, which is fundamentally incorrect (See below in this section for a mathematical clarification).} from the parameter under $H_0$. By contrast, if the $p$-value is higher than $\alpha$, then $H_0$ would fail to be rejected at that level.\footnote{Based on the logic of NHST, researchers should note that $H_0$ can never be 'accepted', it can only ever be rejected or fail to be rejected (\citealp{Kruschke2014}: 305).} This is consistent with $H_0$ being true, and because the estimated parameter cannot account for sampling uncertainty, it is referred to as being 'statistically indiscernible' from the parameter under $H_0$.
+
+From this conceptualization of the \textit{p}-value, it is evident that the intended purpose of this statistic is that of \textit{statistical inference}, that is, inferring results from sample to population (\citealp{Agresti2018}: 16-17). Compared to the criteria of surprise previously identified in section \ref{sec:problem_surprise}, it is \textit{not} conceptualized with the purpose of expressing the degree of discrepancy between results and predictions based in theory (i.e., either a small or large \textit{p}-value could be consistent with any degree of actual surprise induced by the results). While the \textit{p}-value is relative to the parameter under $H_0$, this parameter-value generally does \textit{not} reflect a serious expectation/prediction based in theory (i.e., what social theory would be considered substantive if its sole prediction involved a parameter-value being non-zero?), and it fails to evolve with theory by generally remaining a nil hypothesis irrespective of context, making revisions based on the \textit{p}-value hard to justify.
+
+At the same time, since $H_0$ involves a \textit{point} parameter, even if its nil parameter were replaced with a substantive parameter based on previous results, theories $-$ at least in the social and behavioral sciences $-$ are seldom specific enough to justify the level of precision implied by a single point (cf. \citealp{Meehl1967}). Because it is much more likely that a parameter can change across time and context, the perfect level of theoretical certainty implied by a point predication can \textit{a priori} be taken as 'absurd' (cf. \citealp{Voltaire1817}: 703). While a step in the right direction could involve replacing the null-hypothesis with a \textit{null interval} to reflect a range of reasonable values (e.g., \citealp{KruschkeAndLiddell2018, Lakensetal2018}), this fails to fully solve the issue considered here, because such an interval implies that the theory expects all values within that interval to be equally plausible. A more appropriate approach would instead arguably involve a range of plausible values, differing in probability as based in theory and previous results, which is something that will be considered later in section \ref{sec:solution}.
+
+The conceptual issues of the $p$-value can be further recognized with a simple example. Suppose one hypothetically conducts a \textit{randomized controlled trial} (RCT; \citealp{DeatonAndCartwright2018}) on the \textit{entire} population of interest, where half of individuals are exposed either to a placebo condition or some treatment. One theory expects the treatment to change these individuals, while another theory expects it \textit{not} to change anything. Even if the treatment is found to induce a change or not, the \textit{p}-value is entirely irrelevant to the purposes of this experiment because there is no need for statistical inference (i.e., because the 'sample' is the entire population).\footnote{While one may argue that calculating the $p$-value in this example could help express uncertainty, it should be emphasized that the only uncertainty that can be expressed by the $p$-value is that of \textit{sampling uncertainty}, which is only relevant for statistical inference. Since the data constitutes the entire population of interest in the example, there is no sampling involved, meaning that for all practical purposes (See below in this section), the \textit{p}-value is \textit{a priori} zero, and therefore an irrelevant concern.} Since an assessment of the surprise of the results remains relevant in spite of the irrelevance of the \textit{p}-value, this means that an assessment of surprise must be separate from it.
+
+These conceptual limitations can be reinforced by further considering the mathematical properties of the $p$-value. While it can be calculated in numerous ways, the most widely used version of the $p$-value involves an assumption that the sampling distribution of the estimator used to calculate the parameter of interest ($\hat{\theta}$) is \textit{Gaussian} (i.e., Normal; \citealp{Wooldridge2019}: 723-724), which under a nil hypothesis means that the distribution can be characterized with the following zero-mean \textit{Normal probability distribution} ($\mathcal{N}$; \citealp{Agresti2018}: 84-91):
+
+\begin{equation}\label{eq:theta_hat}
+\hat{\theta} \sim \mathcal{N}(0, \sigma_{\hat{\theta}}^2) \\
+= \frac{1}{\sqrt{2\pi\sigma_{\hat{\theta}}^2}}e^{
+- \frac{x^2}{2\sigma_{\hat{\theta}}^2}
+}
+\end{equation}
+where $\sigma_{\hat{\theta}}$ refers to the dispersion of this sampling distribution of $\hat{\theta}$ (i.e., the \textit{standard error}; \citealp{Field2018}: 61-64); $\pi = 3.141\ldots$ is the ratio between the circumference and diameter of a circle; and $e = \sum_{n=0}^{\infty} \frac{1}{n!} = 2.718\ldots$ is the base of the natural exponential function.
+
+If $H_0: \theta = 0$ and $H_a: \theta \neq 0$, the direction by which $\hat{\theta}_s$ deviates from $0$ is irrelevant, and the $p$-value is accordingly referred to as \textit{two-tailed} (\citealp{Field2018}: 79-81), which given the symmetry of the distribution in (\ref{eq:theta_hat}) is given by the definite integral (cf. \citealp{StockAndWatson2019}: 111, eq. 3.6):
+
+\begin{equation}\label{eq:pvalue}
+p = 2\int_{|\hat{\theta}_s|}^{\infty} \mathcal{N}(0,\sigma^2_{\hat{\theta}}) \: \text{d}x
+\end{equation}
+where $\int$ denotes the integration operator, and $|\hat{\theta}_s|$ is the absolute value of $\hat{\theta}_s$.
+
+Since an application of formula (\ref{eq:pvalue}) requires calculating $\sigma_{\hat{\theta}}$ using infinitely many random samples from a population in the possibly hypothetical scenario where $H_0$ is true, $\sigma_{\hat{\theta}}$ is generally estimated instead. For example, if the parameter of interest is the population mean (i.e., $\theta = \mu$), where $\hat{\mu} = \frac{1}{n}\sum_{i = 1}^n x_i$ is its estimator (\citealp{Field2018}: 27), with $x_i$ denoting the $i$th value from an $n$-length vector constituting a random sample of independent and identically distributed ($iid$) values drawn from a Normally distributed population of interest; and the population variance is estimated as $\hat{\sigma}^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \hat{\mu})^2$ (\citealp{Field2018}: 30), then the estimator for the dispersion of the sampling distribution for the estimated mean is (\citealp{StockAndWatson2019}: 113, eq. 3.9): $\hat{\sigma}_{\hat{\mu}} = \frac{\hat{\sigma}}{\sqrt{n}}$.
+
+Now, since $\hat{\sigma}^2$ is an \textit{unbiased} and \textit{consistent} estimator of $\sigma^2$ (\citealp{StockAndWatson2019}: 112; \citealp{Wooldridge2019}: 716-723, 766), $\hat{\sigma}^2$ and $\sigma^2$ converge as the sample size ($n$) increases towards infinity, while $\sqrt{n}$ increases without bound. A mathematical analysis of $\hat{\sigma}_{\hat{\mu}}$ thus makes it evident that the estimated dispersion of the sampling distribution approaches zero as $n$ increases towards infinity: 
+
+\begin{equation}\label{eq:se_limit}
+\underset{n \rightarrow \infty}{\lim} \frac{\hat{\sigma}}{\sqrt{n}} = 0
+\end{equation}
+
+The implications of equation (\ref{eq:se_limit}) pose a detrimental issue for the ability of the $p$-value to reflect surprise. This can be made more clear by first converting the estimated parameter into a standardized format called a \textit{test statistic} (\citealp{Field2018}: 78-79). In relation to an assumption of a Normal sampling distribution, this test statistic is referred to as a $z$-value, which involves the rescaling formula (\citealp{Field2018}: 37, eq. 1.9): $z = \frac{\hat{\mu} - \mu_{H_0}}{\hat{\sigma}_{\hat{\mu}}}$, where $\mu_{H_0}$ denotes the mean under $H_0$. \textit{If and only if} (iff) the difference between the population parameter and the population parameter under the null-hypothesis is non-zero (i.e., $\mu - \mu_{H_0} \neq 0$), this $z$-value can be recognized to approach infinity as $\hat{\sigma}_{\hat{\mu}}$ decreases towards zero, since $\hat{\mu} - \mu_{H_0}$ converges to $\mu - \mu_{H_0}$ as $n$ increases towards infinity, due to $\hat{\mu}$ being unbiased and consistent, while $\mu_{H_0}$ is a constant (\citealp{StockAndWatson2019}: 104-107; \citealp{Wooldridge2019}: 716-723). Similar to (\ref{eq:se_limit}), this is expressed as:
+
+\begin{equation}\label{eq:z_limit}
+\underset{\hat{\sigma}_{\hat{\mu}} \rightarrow 0}{\lim} \frac{\hat{\mu} - \mu_{H_0}}{\hat{\sigma}_{\hat{\mu}}} = \infty \:\:\:\:\:\: \text{iff} \:\: \hat{\mu} - \mu_{H_0} \neq 0
+\end{equation}
+which has been established to occur in (\ref{eq:se_limit}) when $n \rightarrow \infty$. Due to the $z$-standardization, the Normal distribution in (\ref{eq:pvalue}) has become a standard Normal, and substituting $\hat{\theta}_s$ for $z$, it can finally be realized that the limit of the $p$-value as $z$ increases towards infinity is zero:
+
+\begin{equation}\label{eq:pvalue_limit}
+\underset{z \rightarrow \infty}{\lim}2\int_{|z|}^{\infty} \mathcal{N}(0, 1) \: \text{d}x = 0
+\end{equation}
+as demonstrated to occur in (\ref{eq:z_limit}) when $\hat{\sigma}_{\hat{\mu}} \rightarrow 0$, which happens when $\mu - \mu_{H_0} \neq 0$, and $n \rightarrow \infty$ as shown in (\ref{eq:se_limit}).
+
+The implication of these limits are critical. For any instance where the null-hypothesis is not \textit{exactly} true $-$ which likely applies to most of the phenomena studied in the social sciences\footnote{That the null-hypothesis is generally false within the social sciences can be realized by considering that hypotheses generally concern point values (e.g., $H_0: \theta = 0 $) despite most studied phenomena arguably being continuous, and the assumptions for the data-generating processes of stochastic continuous phenomena involve distributions where a point hypothesis has an \textit{a priori} zero probability of being true (cf. \citealp{Cohen1994}: 1000; \citealp{Loftus1991, Loftus2001}; \citealp{SteigerAndFouladi1997}; \citealp{Thompson1996}; \citealp{Tukey1991}: 100; \citealp{VicenteAndTorenvliet2000}: 260). In psychology, the notion that the nil hypothesis is always false is referred to as Meehl's (\citeyear{Meehl1978}) conjecture (\citealp{Gigerenzer2004}: 601).} $-$ anything becomes 'statistically discernible' with a sufficiently large sample size. In the event that one equates a low $p$-value with surprise, this unfortunately means that \textit{almost anything becomes surprising with a large enough sample size}, irrespective of how expected the results actually are under the given theory.\footnote{The issue cannot be addressed by specifying the null-hypothesis to fit the point prediction of a given theory, since the most negligible difference between the result and the prediction can produce a vanishingly small $p$-value given a sufficiently large sample.} Using the $p$-value as a measure of surprise is thus conceptually flawed and runs counter to the characteristics of actual surprise recognized by social science researchers as previously identified in section \ref{sec:problem_surprise}. 
+
+While one may argue that the extent of this informal practice of using the $p$-value as a measure of surprise is too negligible for consideration, it may be counter-argued that such misuse is best addressed as early as possible, so as to prevent it from becoming a formal practice. Such a development may seem improbable, but this happened recently within the field of epidemiology, where \cite{Coleetal2021} introduced the '\textit{S}-value' as a formal measure of surprise. Readers of this paper, however, could quickly realize that this '$S$'-value unfurtunately had a one-to-one correspondence with the $p$-value through the formula (\citealp{Coleetal2021}: 192): $S \equiv -\text{log}_2(p)$. Similar to criticisms made against other measures derived solely from the $p$-value\footnote{Somewhat unsurprisingly, this is \textit{not} the first time that the $p$-value has been inappropriately repurposed to express phenomena outside its intended scope. As an infamous example, \cite{Killeen2005a} similarly sought to address the fact that the $p$-value cannot express the probability that the results of a study will replicate in another study (see, e.g., \citealp{Gigerenzer2018}). The mathematical formula underlying the proposed solution by \cite{Killeen2005a} was widely criticized (e.g., \citealp{Iversonetal2009, Macdonald2005, MaraunAndGabriel2010, Serlin2010}; for the response, see, \citealp{Killeen2005b}), since it was evident that the formula had a one-to-one correspondence with the $p$-value, and it thus failed to incorporate any information about the probability of replication not already communicated by the $p$-value. Instead, as similarly argued here in relation to surprise, it was argued that a (re)conceptualization of replicability was better founded in Bayesian inference (e.g., \citealp{Macdonald2005}).}, this means that the $S$-value fails to incorporate, nor communicate, any new information besides that already expressed by the $p$-value. The $S$-value is thus as susceptible to the exact same issues identified here for the $p$-value in its ability to express surprise\footnote{This can be made evident by considering that $\underset{p \rightarrow 0}{\lim} -\text{log}_2(p) = \infty$, which was established by equations (\ref{eq:se_limit}) through (\ref{eq:pvalue_limit}) to occur as $n \rightarrow \infty$ iff $\hat{\mu} - \mu_{H_0} \neq 0$, which means that, based on the logic of the $S$-value, almost anything will inevitably become surprising with a sufficiently large sample size, no matter how expected the results were in advance. Despite these issues, other researchers have worryingly advocated for the adoption of the $S$-value (e.g., \citealp{Greenlandetal2022, RafiAndGreenland2020}), further revealing the need for a \textit{proper} formal (re)conceptualization of surprise.}, making it just as \textit{inappropriate}.
+
+Now, while this paper serves to solve this misue of the $p$-value, the aim is \textit{not} to portray researchers negatively for partaking in this inappropriate practice. Indeed, the $p$-value is infamous for being particularly susceptible to misinterpretation (see, e.g., \citealp{Clayton2021}: 291; \citealp{Gigerenzer2018}: 206), with examples including it supposedly being an index of (scientific) significance, reliability, replicability, effectsize, and the probability of $H_0$, $H_a$, or data having been generated by chance, resulting in various criticisms and cautions against its (mis)use (\citealp{ASA2016, Clayton2021, Field2018}: 97-110; \citealp{GelmanAndStern2006, Kruschke2014}: 297-329; \citealp{McShaneetal2019}). Instead, as similarly achieved by other researchers identifying questionable practices within the scientific community (e.g., \citealp{Bishop2006, FlakeAndFried2020, Gelman2024, Ioannidisetal2017, LenzAndSahn2021, Ritchie2020, Simmonsetal2011}), the aim of this paper is to improve social scientific research by informing researchers of this inappropriate practice and to propose a possible solution.
+```
+
+```{=latex}
+\section{Solution}\label{sec:solution}
+
+While the previous section sought to describe how the social sciences are currently being limited by an informal conceptualization of surprise and a misuse of the $p$-value, this section serves to provide a solution to this problem in the form of a formal (re)conceptualization of surprise. While novel to the social sciences, this solution is partly founded in similar (re)conceptualizations proposed for other disciplines (e.g., \citealp{BencomoAndBelaggoun2014, Burkhartetal2025, BurnhamAndAnderson2001, IttiAndBaldi2009, Melloetal2025, Seeharsetal2014}). To that end, central concepts of Bayesian inference (Section \ref{sec:solution_bayesian_inference}) and Information theory (Section \ref{sec:solution_information_theory}) are presented and used to build that conceptualization and identify an appropriate measure for it.
+```
+
+```{=latex}
+\subsection{Bayesian inference}\label{sec:solution_bayesian_inference}
+
+The \textit{Bayesian statistical framework}, also known as Bayesian inference, is an approach to statistical inference that differs from its Frequentist counterpart by defining probability in relation to (inter-)subjective beliefs (for an introduction, see, e.g., \citealp{McElreath2019}). Understanding this framework presupposes some familiarity with \textit{Bayes' theorem} \citep{BayesAndPrice1763, Laplace1951}, which can be expressed in relation to the probability of two discrete events as (\citealp{Kruschke2014}: 101, eq. 5.5):
+
+\begin{equation}\label{eq:bayes_theorem}
+P(A | B) = \frac{P(A)P(B | A)}{P(B)}
+\end{equation}
+where $P(A)$ denotes the probability of the event $A$, which is referred to as the \textit{prior} probability; $P(B)$ denotes the probability of event $B$, sometimes called the \textit{marginal likelihood}; $P(B | A)$ is the probability of event $B$ given that event $A$ has occurred, denoted the \textit{likelihood}; and $P(A | B)$ is the probability of event $A$ given that event $B$ has occurred, which is referred to as the \textit{posterior} probability.
+
+The components of (\ref{eq:bayes_theorem}) are generally reconceptualized for the purposes of statistical inference (\citealp{Gelmanetal2014, LevyAndMislevy2020}) so that the parameter of interest, $\theta$, substitutes $A$, while the collected data, $\mathcal{D}$, substitutes $B$. This means that $P(\theta)$ denotes the (prior) probability of $\theta$, $P(\mathcal{D} | \theta)$ the probability of the data given the parameter, and $P(\theta | \mathcal{D})$ the (posterior) probability of $\theta$ given $\mathcal{D}$, with this latter component being of primary interest in Bayesian inference.
+
+For practical purposes $P(\mathcal{D})$ can often be ignored due to relying on \textit{Markov-Chain Monte Carlo methods} (MCMC; \citealp{Brooksetal2011}), which leaves $P(\theta)$ and $P(\mathcal{D} | \theta)$ relevant for calculating $P(\theta | \mathcal{D})$. While those familiar with \textit{likelihood-based inference} (see, e.g., \citealp{King1998}) will know that $P(\mathcal{D} | \theta)$ is often easy to derive from the statistical model used in the analysis, $P(\theta)$ is by comparison rarely known. To solve that issue, this prior is specified as a probability distribution using \textit{a priori} knowledge about $\theta$. While the discretion involved in specifying this prior distribution can make Bayesian inference (inter-)subjective, for many prior specifications, the results approximate Frequentist results with a sufficiently large sample size (\citealp{CoverAndThomas2006}: 388; \citealp{Hastieetal2017}: 272; \citealp{King1998}: 30; \citealp{Kruschke2014}: 113), and it can be considered a generalization of the arguably less subjective\footnote{Since all human processing of information and knowledge is necessarily (inter-)subjectively dependent (cf. \citealp{Husserl1983}; see also \citealp{Kant2018}), the Frequentist statistical framework, including its likelihood-based approach, is \textit{not} 'objective' (i.e., independent of (inter-)subjective experience), despite claims to the contrary (e.g., \citealp{Mayo1996}: 89).} likelihood-based approach (cf. \citealp{King1998}: 28). The difference between the two approaches is thus primarily in the definition, and interpretation, of probability.
+
+Unlike other approaches, this conceptualization of Bayesian inference provides a coherent statistical framework for characterizing uncertainty (cf. \citealp{Cox1946, Gelmanetal2014, Jaynes2003, Savage1972}) and enables one to answer questions about the probability of parameters given the data, $P(\theta | \mathcal{D})$. This is impossible in the Frequentist framework, since that approach solely relies upon the likelihood and fails to consider prior information in relation to $\theta$ (\citealp{Kruschke2014, Wagenmakersetal2010}). It also means that results from a Bayesian analysis are generally in the form of probability distributions, which conceptually express how credible different estimated values of $\theta$ are given the data. While these distributions can be summarized with point estimates, such as the mean and standard deviation (SD), or intervals (e.g., 95\% credibility interval), as done in the Frequentist approach, this is theoretically unnecessary, since the posterior distribution comprehensively details one's knowledge about $\theta$ based on the prior and data (\citealp{McElreath2019}: 58). Though Bayesian inference can involve $p$-values and hypothesis tests (see, e.g., \citealp{Makowskietal2019a, Wagenmakersetal2010}), such procedures related to NHST are arguably \textit{not} native to this framework, which instead of the hypothetico-deductive approach, is more naturally based in \textit{abductive reasoning} (see, e.g., \citealp{Dellsen2024}).
+
+Now, consistent with work in other disciplines (e.g., \citealp{IttiAndBaldi2009}), the conceptualization of Bayes theorem used for statistical inference can be recognized to \textit{naturally} and \textit{coherently} capture the informally recognized characteristics of surprise identified in section \ref{sec:problem_surprise}. With surprise being the discrepancy between results and expectations/predictions based in theory, it can be equivalently understood as a discrepancy between two (inter-)subjective states of knowledge: A state of knowledge \textit{prior} to the results and a state of knowledge \textit{posterior} to the results. When theory is formalized, data-driven, and well-established among peers within the social sciences, the prior thus characterizes the state of knowledge as an intersubjective, evidence-based belief about a phenomenon, describing what the research community reasonable expects the results to be.
+
+\subsubsection{The prior reflects current knowledge}\label{sec:bayesian_inference_prior}
+
+As established, since the prior distribution is conceptually a comprehensive statement about a former state of knowledge, it can be appropriately used to characterize predictions based in theory. Characterizing this state of knowledge as a prior distribution can be difficult, especially if the theory only makes vague predictions about relevant parameters. To help build intuition around them, four examples are discussed here.
+```
+
+```{=latex}
+\begin{figure}[htbp]
+\centering
+\resizebox{1\linewidth}{!}{\input{Plots/simulated_priors_plot.tikz}}
+\caption{Examples of prior distributions}
+\label{fig:example-simulated-priors-plot}
+\end{figure}
+```
+\vspace{-1em}
+\begingroup
+\linespread{1}\selectfont
+\fontsize{8pt}{10pt}\selectfont
+\par\noindent
+\textbf{NOTE}: $\text{Prior \#1} \sim \mathcal{N}(0, 1)$; $\text{Prior \#2} \sim \mathcal{N}(0, 0.5)$; $\text{Prior \#3} \sim \mathcal{N}(1, 1)$; $\text{Prior \#4} \sim \mathcal{N}(-2, 0.5)$. The geometrics below the distributions indicate the mode (circle) and the 95\% HDCI (bar). Monte Carlo samples = `r posterior_samples %>% qformat()`.
+\par
+\endgroup
+\vspace{1em}
+
+```{=latex}
+At no loss of generality, suppose $X$ is a Normally distributed variable in some population of interest: $X_i \sim \mathcal{N}(\mu, \sigma)$ for all $i$ in $1,\ldots, N$, where one wishes to estimate the mean $\mu$ using a representative and sufficiently large sample. For Bayesian inference, it is necessary to specify its prior, $P(\mu)$, which can be achieved in numerous ways depending on one's information about it. As shown visually in figure (\ref{fig:example-simulated-priors-plot}), a possible first prior (Prior \#1) is specified as a Normal distribution: $\mathcal{N}(0, 1)$, which in this context can be taken to reflect a diffuse state of knowledge, where there is complete theoretical ignorance about the sign of the parameter (i.e., whether the mean is positive or negative), but its relatively substantial width (i.e., size of the dispersion) implies that mean could be relatively large irrespective of its sign. This prior may be called \textit{regularizing} (\citealp{McElreath2019}: 214-216), or 'skeptical, yet persuadable', which is a type of weakly informative prior that is critical with respect to the sign of a parameter of interest but which remain wide enough to be influenced by the results.
+```
+
+```{=latex}
+A possible second prior (Prior \#2) can be made similar to the first, but by comparison, it is much narrower, which implies a stronger expectation that the mean will not be that large irrespective of the sign. This contrasts a possible third prior (Prior \#3), which has the expectation that the mean is positive, but its similar width to the first prior means it reflects a less certain expectation. The last possible prior considered here (Prior \#4) characterizes an expectation opposite that of the third prior, since it expects the mean to be negative, and its greater narrowness reflects greater certainty about this theoretical belief.
+```
+
+```{=latex}
+\subsubsection{The posterior reflects updated knowledge}\label{sec:bayesian_inference_posterior}
+
+While the state of knowledge prior to the results could be difficult to precisely express as a probability distribution, there is no need for the researcher to specify the state of knowledge posterior to the results, since this resulting probability distribution is a function of the chosen prior distribution and the data. Following \cite{IttiAndBaldi2009}, the posterior can thus be considered an \textit{updated} state of knowledge, which is useful, since it is informative about how the expectations of that theory should change based on the data to enable better predictions in the future.
+
+Since the posterior is the product of the prior and the data, this conceptualization helps reflect the aforementioned characteristic of surprise (Section \ref{sec:problem_surprise}), whereby it is always relative to the theory to which results are being compared. Since different prior specifications can reflect varying predictions made by different theories, the posterior could theoretically be compared to each to enable an assessment of how 'surprising' the results are given each theory.
+
+As an example, let the posterior distribution resulting from an analysis be identical to the fourth example of the priors (Prior \#4) previously shown in figure (\ref{fig:example-simulated-priors-plot}), meaning it is characterized as a Normal probability distribution with a mean parameter of $-2$ and a dispersion of $0.5$: $\mathcal{N}(-2, 0.5)$. Assume that these aforementioned priors represent a set of predictions made from different theories, and that the data is large enough to make the posterior effectively independent of them. Comparing the posterior to each prior then makes it clear that the discrepancies between them are \textit{not} equivalent. For example, when evaluated against Prior \#4, the results perfectly fit the predictions made \textit{a priori} about the parameter, which would be fully consistent with an intuitive lack of surprise.
+
+In making these visual comparisons, while it could seem appropriate to quantify the discrepancy as the difference-in-means between the posterior and each of these distributions, such a naïve approach creates an issue that can be made immediately apparent. While the differences between the posterior mean ($-2$) and the mean of Priors \#1 and \#2 (both $0$) are the same (i.e., $-2$), the results should intuitively appear more surprising if the comparison is being made against Prior \#2. This is because Prior \#2 has a dispersion smaller than Prior \#1 (i.e., $0.5$ vs. $1$), and since its narrower distribution reflects the greater degree of theoretical certainty around a smaller range of parameter values, the results should \textit{not} be equally surprising but in fact be \textit{more} surprising when compared against Prior \#2. As such, a quantification based solely on a difference-in-means fails to reflect that Priors \#1 and \#2 should induce different levels of surprise under a posterior equivalent to Prior \#4. The only way to reliably avoid such limited comparisons is for the measure used to quantify surprise to able to account for the entirety of differences between the posterior and prior distribution, which is something that will be introduced for this conceptualization in the following section.
+
+Using these concepts from Bayesian inference, surprise has thus far been conceptualized as a discrepancy between states of knowledge, with these states specifically being expressible as a prior and posterior probability distribution. For both the posterior and prior distributions to be valid, they should reflect a genuine state of knowledge about a phenomenon of interest, ideally based on well-established theory and quality data. The advantage of this approach has thus been demonstrated to arise from the conceptual properties of Bayesian inference that enable comprehensive statements to be made with relative ease about such states of knowledge. A shortcoming, however, is that Bayesian inference can be considered conceptually weak of terms of meaningfully quantifying the extent of discrepancy between states of knowledge, which is why the following section turns to key concepts of Information theory that will be used to build upon this Bayesian-based conceptualization.
+```
+
+```{=latex}
+\subsection{Information theory}\label{sec:solution_information_theory}
+
+Information theory is a relatively recent field of mathematics that, while primarily concerned with the efficient communication and compression of information (e.g., \citealp{Hartley1928, Nyquist1924, Nyquist1928, Shannon1948, Shannon1964, Wiener2019}), has proven useful across numerous disciplines, including statistical modeling (e.g., \citealp{Akaike1973, Hastieetal2017, Mielniczuk2022}) and Bayesian inference (e.g., \citealp{ChalonerAndVerdinelli1995, Jaynes1968, Vehtarietal2017, Watanabe2010}). Using terminology closely related to statistical mechanics (\citealp{Jaynes1957a}; \citeyear{Jaynes1957b}), information is generally conceptualized within this discipline as the 'entropy' of a random variable, which is the key concept in which an appropriate measure of surprise is founded. Since this and related concepts have seen relatively sparse use within the social sciences, they are briefly presented here.
+
+\subsubsection{Entropy}\label{sec:information_theory_entropy}
+
+In Information theory, \textit{entropy} is 'a measure of the average uncertainty in the random variable' (\citealp{CoverAndThomas2006}: 5), making it synonymous with randomness, unpredictability, and disorganization (\citealp{Berrettetal2019}: 288; \citealp{CoverAndThomas2006}: 135; \citealp{Jaynes1957a}: 622; \citealp{Renyi1961}: 547). It can be thought of as the information needed, on average, to describe a random variable (\citealp{Berrettetal2019}: 288; \citealp{CoverAndThomas2006}: 19), which means that the more random the variable, the higher its entropy.
+
+For a finite discrete random variable $X$, the \textit{Shannon-Boltzmann entropy}, $H(X)$, is defined by the mathematical formula (\citealp{Backetal2018}: 1, eq. 1; \citealp{CoverAndThomas2006}: 5, eq. 1.1; \citealp{Renyi1961}: 547, eq. 1.1):
+
+\begin{equation}\label{eq:shannon_entropy}
+H(X) \equiv \sum_{x \in X} p(x) \: \text{log} \: \frac{1}{p(x)}
+\end{equation}
+\begin{equation}
+= - \sum_{x \in X} p(x) \: \text{log} \: p(x)
+\end{equation}
+where $\sum$ denotes the summation operator applied over the unique elements of $X$; $p(x) = P(X = x)$ is the probability mass function for $X$; and $\text{log}$ is the logarithmic function, where it is taken by convention that $0 \: \text{log} \: 0 \equiv 0$ (\citealp{CoverAndThomas2006}: 14). Since the base of the logarithm is generally taken as $2$, this means that the scale of entropy is in \textit{binary units}\footnote{Popular alternatives to the base $2$ for the logarithmic function are the base of the exponential $e$ and $10$, which means that the natural logarithm (i.e., $\text{ln}$) would be used for the former. Instead of bits, this produces entropies on the scale of \textit{natural units} (i.e., \textit{nats}) and \textit{decimal units} (i.e., \textit{dits}), respectively (\citealp{Backetal2018, CoverAndThomas2006}: 14; \citealp{DelgadoBonalAndMarshak2019}).} (i.e., \textit{bits}, which are \textit{not} to be confused with the related concept of binary digits; \citealp{CoverAndThomas2006, DelgadoBonalAndMarshak2019, Shannon1948}). Being measured in bits means that the entropy can be meaningfully interpreted as the expected number of binary questions (i.e., Yes/No questions) needed to know a value of $X$ with certainty (\citealp{CoverAndThomas2006}: 16).
+
+With this formula, the entropy can generally be stated to be a non-negative real number, whose upper bound is the logarithm of the number of unique elements in $X$ (i.e., $H \in \mathbb{R}^{[0; \text{log}(|X|)]}$; \citealp{CoverAndThomas2006}: 29). For example, a uniform \textit{Bernoulli} ($\mathcal{B}$) variable $X$ (i.e., $X \sim \mathcal{B}(p = 0.5)$) has an entropy of 1 bit. This is an intuitive upper bound for Bernoulli variables, since it reflects the \textit{equiprobability} of the elements, making any element of $X$ maximally unpredictable. This also means that if $p$ either increases or decreases, the entropy decreases, becoming 0 if $p \in \{0; 1\}$. This is similarly an intuitive lower bound, since either value makes $X$ constant, and an entropy of 0 thus reflects that we \textit{a priori} know the values of $X$ and can predict them with absolute certainty (\citealp{CoverAndThomas2006}: 14-15). As such, the more uniform a distribution, the higher its entropy (\citealp{DelgadoBonalAndMarshak2019}).
+
+While this conceptualization of entropy possesses numerous desirable mathematical properties for measuring information, for example, being insensitive to the actual values of $X$ by depending solely upon the their probabilities (\citealp{CoverAndThomas2006}: 14), it is limited to \textit{discrete} random variables, which is unfortunate, since most phenomena of interest within the social sciences are arguably \textit{continuous}.\footnote{In statistical analysis, rather than studying a phenomenon of interest by itself, researchers generally study the parameters of a statistical model theorized to generate said phenomenon. This often involves \textit{generalized linear models} (GLMs; \citealp{Field2018, Kruschke2014}) that assume \textit{linearity} (and thus \textit{continuity}) in its parameters (\citealp{Wooldridge2019}: 763).}
+
+In the event that $X$ instead denotes a continuous random variable, its uncertainty is instead captured by the concept of \textit{differential entropy}, which is 'the entropy of a continuous random variable' and is denoted $h(x)$ (\citealp{CoverAndThomas2006}: 243). If the distribution of $X$ can be characterized by the probability density function $f(x)$, its differential entropy is calculated with the formula (\citealp{AhmadAndLin1975}: 373, eq. 1; \citealp{Beirlantetal2001}: 1, eq. 1; \citealp{Berrettetal2019}: 288; \citealp{CoverAndThomas2006}: 243, eq. 8.1; \citealp{Hastieetal2017}: 561, eq. 14.82):
+
+\begin{equation}\label{eq:differential_entropy}
+h(X) \equiv - \int_S f(x) \: \text{log} f(x) \: \text{d}x
+\end{equation}
+where $\int_S$ denote the integration operator applied over the \textit{support set} of $X$ with respect to $x$ (i.e., where $f(x) > 0$).\footnote{Since (\ref{eq:differential_entropy}) involves an integral, the calculation of differential entropy presupposes that the density function and integral for $X$ exists (\citealp{CoverAndThomas2006}: 243-244).} Unlike entropy, the differential entropy can be negative (\citealp{CoverAndThomas2006}: 244), generally making it a real-valued scalar (i.e., $h(X) \in \mathbb{R}$), which can be considered harder to interpret. Similarly, by involving an integral, it is harder to calculate, though closed-form expressions do exist for some known probability distributions, such as the Normal, whose differential entropy can easily be calculated by merely knowing its dispersion (\citealp{CoverAndThomas2006}: 244, eq. 8.9):
+\begin{equation}
+h(X) = \frac{1}{2} \text{log} 2 \pi e \sigma^2
+\end{equation}
+For example, if $X$ is a standard Normal variable (i.e., $X \sim \mathcal{N}(0, 1)$), this means that its differential entropy is given as $\frac{1}{2} \text{log} 2 \pi e \approx 2.047$ bits.
+```
+
+Following \cite{DelgadoBonalAndMarshak2019}, the concept of entropy can be found useful in relation to the states of knowledge previously conceptualized using Bayesian inference in section \ref{sec:solution_bayesian_inference}. Since that tentative conceptualization used probability distributions to characterize prior and posterior knowledge, which can meaningfully be considered to be 'random variables', at least in an epistemological sense of the word (cf. \citealp{McElreath2019}), the approaches can easily be combined, leading to the notion that the different states of knowledge implied by the prior and posterior distributions simply express different \textit{states of information}.\footnote{This conceptualization's treatment of information and knowledge as synonymous is also consistent with qualitative conceptualizations of these terms that are \textit{not} formally based in either Bayesian inference or Information theory (e.g., \citealp{McGinnis2011}: 314).} Specifically, this means that the prior distribution is conceptualized to have an entropy, which expresses the amount of uncertainty in one's information about the parameter of interest $\theta$; the wider that distribution, the greater the uncertainty about $\theta$. The posterior distribution, by comparison, differs from the prior to the extent that the data has changed the entropy of $\theta$.
+
+For example, the previously specified Normal prior distributions (see Section \ref{sec:bayesian_inference_prior}) with a dispersion ($\sigma$) of $1$ have a differential entropy of approximately `r differential_entropy_gaussian(1) %>% round_down(digits = digits$text)` bits, while those with $\sigma = 0.5$ have a differential entropy of approximately `r differential_entropy_gaussian(0.5) %>% round_down(digits = digits$text)` bits, thus reflecting different levels of surprise. While this example demonstrates that the concept of (differential) entropy can be imported to Bayesian inference and used to characterize the information contained within a state of knowledge, it also makes it clear that a mere comparison of (differential) entropy between the prior and posterior would again fail to consider the plethora of ways by which the prior and posterior distributions could otherwise differ, since the discrepancy between the differential entropy of the posterior from section \ref{sec:bayesian_inference_posterior} and the first and third prior (i.e., $\Delta h = 1$ bits), and the second and fourth prior (i.e., $\Delta h = 0$ bits), are the same, despite their means clearly differing. This contradicts the established intuition suggesting that the degrees of discrepancy between them, and thus the induced surprise, should be different.
+
+```{=latex}
+While the concept of (differential) entropy has thus been shown to be a useful foundation to link concepts from Bayesian inference and Information theory, it is clearly insufficient for appropriately conceptualizing and measuring surprise. This can be mitigated by introducing the final concept of relative entropy.
+```
+
+```{r, include = FALSE}
+
+# Compute JSD for the simulated Gaussian priors
+JSD_prior1 <- JSD_gaussian(0, 1, -2, 0.5)
+JSD_prior2 <- JSD_gaussian(0, 0.5, -2, 0.5)
+JSD_prior3 <- JSD_gaussian(1, 1, -2, 0.5)
+JSD_prior4 <- JSD_gaussian(-2, 0.5, -2, 0.5)
+```
+
+```{=latex}
+\subsubsection{Relative entropy}\label{sec:information_theory_relative_entropy}
+
+The \textit{relative entropy}, also known as the Kullback-Leibler (\citeyear{KullbackAndLeibler1951}) divergence (KL divergence; e.g., \citealp{PerezCruz2008}: 1) quantifies information divergence by being 'a measure of the distance between two distributions.' (\citealp{CoverAndThomas2006}: 19). Unlike entropy, which quantifies the uncertainty of a distribution, the relative entropy quantifies the divergence between distributions, with 'divergence' simply referring to the 'statistical distance' between them (which should \textit{not} be mistaken for a \textit{geometric} distance; \citealp{Nielsen2019}: 4). It has proven 'central to information theory and statistics' (\citealp{PerezCruz2008}: 1084; see also \citealp{CoverAndThomas2006}: 347-408) and seen application across numerous disciplines (e.g., \citealp{BurnhamAndAnderson2001, ChalonerAndVerdinelli1995}).
+
+For two discrete random variables $p$ and $q$, the relative entropy is denoted $D(p || q)$ and mathematically defined by formula (\ref{eq:kl_divergence_discrete}) (\citealp{CoverAndThomas2006}: 19, eq. 2.26; \citealp{DelgadoBonalAndMarshak2019}: eq. 5); and if $p$ and $q$ are continuous random variables with probability density functions $f$ and $g$, it is given by formula (\ref{eq:kl_divergence_continuous}) (\citealp{CoverAndThomas2006}: 251, eq. 8.46; \citealp{PerezCruz2008}: 1, eq. 1).
+
+\begin{equation}\label{eq:kl_divergence_discrete}
+D(p || q) \equiv \sum_{x \in X} p(x) \: \text{log} \frac{p(x)}{q(x)}
+\end{equation}
+\begin{equation}\label{eq:kl_divergence_continuous}
+\equiv \int f \: \text{log} \frac{f}{g}
+\end{equation}
+
+The properties of relative entropy for the discrete and continous case are mostly the same (\citealp{CoverAndThomas2006}: 251). For example, they satisfy the property of \textit{information monotonicity} by being invariant to reparameterizations (cf. \citealp{Nielsen2019}: 3); the relative entropy is zero iff $p = q$ for the discrete case; and $f = g$ (almost) everywhere for the continuous case (\citealp{CoverAndThomas2006}: 252-253; see also \citealp{PerezCruz2008}: 1). Since it is taken by convention that $0 \: \frac{0}{0} \equiv 0$, $0 \: \frac{0}{q} \equiv 0$, and $p \: \frac{p}{0} \equiv \infty$ (\citealp{CoverAndThomas2006}: 19), the relative entropy can for both (\ref{eq:kl_divergence_discrete}) and (\ref{eq:kl_divergence_continuous}) be infinite, with finite values only occurring for the continuous case when the support set of $f$ is contained in the support set of $g$ (i.e., iff $f$ is \textit{absolutely continuous} with respect to $g$). Thus, the relative entropy is generally a non-negative scalar on the \textit{extended real number line} (i.e., $D(p || q) \in \bar{R}^{[0; \infty]}$), and if a base of $2$ is used for the logarithm, the relative entropy expresses the information divergence in bits, with a unit of surprise being denoted one 'wow' (cf. \citealp{IttiAndBaldi2009}).
+
+While the relative entropy was developed to quantify how easy it is to discriminate between two distributions (\citealp{KullbackAndLeibler1951}: 79), it can also be interpreted as a quantification of how inefficient it is to assume that a random variable is distributed as $q$ when it is actually distributed as $p$ (\citealp{CoverAndThomas2006}: 19). This is appealing, since researchers may interpret it as the 'mean of the \textit{log-likelihood ratio}' (\citealp{PerezCruz2008}: 1, emphasis added). This makes it useful for hypothesis testing and model selection (\citealp{CoverAndThomas2006}: 375-380; see, e.g., \citealp{King1998}: 84-86; \citealp{McElreath2019}: 202-214), as it can be used to justify preferring a model with the lowest relative entropy on the basis of \textit{parsimony} (i.e., Occam's razor; \citealp{CoverAndThomas2006}: 1).
+
+That interpretation can be recognized as similarly useful for the current purposes of conceptualizing surprise, since it may be meaningfully rephrased so that the relative entropy 'reflects the gain of information resulting from adding the knowledge in $p$ relative to $q$, or the gain of information when we learn that the real probability function was $p$ instead of $q$ as we thought initially.' (\citealp{DelgadoBonalAndMarshak2019}: 7) Such an interpretation fits the ongoing Bayesian (re)conceptualization of surprise by enabling the relative entropy between the prior and posterior distribution to be meaningfully interpreted as the gain in information resulting from adding the knowledge of the data to the prior. This means that divergence, by merit of being conceptually based in Bayesian inference and Information theory, coherently reflects how unexpected the results are compared to one's expectations (cf. \citealp{IttiAndBaldi2009}), with zero divergence/surprise occurring iff the results exactly match one's expectations.
+
+This leads to the completed, formal conceptualization of surprise as \textit{the relative entropy between prior and posterior knowledge}. Within this conceptualization, knowledge and information are thus equated, where the prior and posterior are taken to reflect two states of knowledge, with surprise being defined as the relative entropy between between them.
+
+This conceptualization fits perfectly with the informal notion of surprise identified among social science researchers (Section \ref{sec:problem_surprise}). This is evident, because the informal conceptualization of surprise involved a discrepancy between results and expectations/predictions about those results based in theory, which is directly reflected in this formal conceptualization, where relative entropy captures the entire divergence (i.e., discrepancy) between the posterior knowledge (i.e., results given the data) and the prior knowledge (i.e., predictions based in theory). It also reflects the \textit{relative} characteristics of surprise, since the amount of surprise within this formal conceptualization is always relative to the prior, with different amounts of surprise being possible if the posterior is compared to different prior specifications representing different theoretical expectations. As the prior is continuously updated based on new data to better reflect reality, the relative entropy, and thus the surprise, will lessen, which can be used to justify revision or discardment of theory. This formal (re)conceptualization of surprise thus offers a theoretically coherent understanding of surprise that fits with social science researchers' intuitive use of the word, making it particularly suited for that field.
+
+Now, perhaps attributable to its coherent conceptualization and intuitive interpretation, this is not the first time that relative entropy has been proposed as part of a formal conceptualization of surprise across different scientific fields. For example, it has previously been proposed within the disciplines of clinical care (e.g., \citealp{Burkhartetal2025}), ecology (e.g., \citealp{BurnhamAndAnderson2001}), software engineering (e.g., \citealp{BencomoAndBelaggoun2014}), and computer science (e.g., \citealp{IttiAndBaldi2009}). However, while these proposals are undoubtedly helpful in reducing the mispractice of using the $p$-value as an implicit measure of surprise, their choice to not just conceptualize surprise as the relative entropy, but also as its measure, can be considered suboptimal given its limitations.
+
+A limitation of relative entropy is that it is \textit{not} a 'proper' metric in the geometric sence of the word. This is because it is \textit{asymmetric}, which generally means that $D(p || q) \neq D(q || p)$, and it fails to satisfy the \textit{triangle inequality} (\citealp{CoverAndThomas2006}: 19; \citealp{DelgadoBonalAndMarshak2019}: 7), whereby it lacks a series of intuitive properties that one may generally attribute to a distance. For example, suppose $A$, $B$, and $C$ represent points in Euclidean space. Let the measure of the distance travelled be asymmetric and in violation of the triangle inequality. Then, the measured distance directly from $A$ to $C$ may \textit{not} be the same as the distance travelled directly from $C$ to $A$, and either of these may be longer than the distance travelled from $A$ to $B$ to $C$. This is counter-intuitive (cf. \citealp{CoverAndThomas2006}: 367; for an alternative view, see, e.g., \citealp{McElreath2019}: 208-209), since from real-world experience, one would expect distances to be symmetric, with stops and detours either adding to or not influencing the distance travelled. Combined with the aforementioned fact that the relative entropy can be infinite, these limitations thus make it harder to meaningfully interpret and invites researcher discretion by being sensitive to the arguably arbitrary choice of whether to calculate it between $p$ and $q$ or between $q$ and $p$.
+
+The relative entropy/KL divergence is by no means the only measure of divergence, with numerous symmetric alternatives (e.g., \textit{J} divergence; \citealp{Cha2007, Jeffreys1946}), some of which can be considered proper geometric measures of distance. For example, the \citeauthor{Bhattacharyya1943} (\citeyear{Bhattacharyya1943, Bhattacharyya1946}) distances, the Earth mover's distance (\citealp{Kantorovich1939, Monge1781, Vaserstein1969}), and the Mahalanobis (\citeyear{Mahalanobis1936}) generalized distance (\citealp{KullbackAndLeibler1951}: 79). While each of these measures of distance possess advantages and disadvantages, the one proposed here to measure surprise within the social sciences builds on the Jensen-Shannon divergence, that, while itself based on the relative entropy, possesses none of the limitations mentioned here.
+```
+
+```{=latex}
+\subsubsection{Jensen-Shannon divergence}\label{sec:information_theory_jensen_shannon}
+
+Formally introduced by \citeauthor{Lin1991} (\citeyear{Lin1991}; see also \citealp{WongAndYou1985}), the \textit{Jensen-Shannon divergence} (JS divergence) is a popular alternative measure of divergence (\citealp{Cha2007, Nielsen2019}). Based on the KL divergence, it is mathematically defined with the formula (\citealp{Cha2007}: 303, eq. 52; \citealp{Nielsen2019}: 3, eq. 10-11):
+
+\begin{equation}\label{eq:js_divergence}
+\text{JS}(p||q) \equiv \frac{\text{D}(p || M) + \text{D}(q || M)}{2}
+\end{equation}
+where $M = \frac{p + q}{2}$ is the \textit{mixture distribution} of $p$ and $q$. From this formula, it can be recognized that the JS divergence is related to the KL divergence by being the arithmetic mean of the relative entropies between $p$ and $q$ and their mixture distribution (cf. \citealp{Lin1991}: 146). The JS divergence shares numerous properties of the KL divergence useful for conceptualizing and measuring information divergence (\citealp{Lin1991}; \citealp{Nielsen2019}: 3), for example, it is non-negative, with zero only occurring if $p = q$ (\citealp{Lin1991}: 146-147).
+
+While the JS divergence is closely related to the KL divergence, it possesses numerous advantages. For example, the JS divergence is always finite due to involving the mixture distribution of $p$ and $q$, which means that the distributions being compared do \textit{not} need to have overlapping support sets (i.e., they need \textit{not} be absolutely continuous with respect to each other; \citealp{Lin1991}: 146-147).
+
+Another advantage is that the JS divergence generally is a non-negative, real-valued scalar with an upper-bound of log $2$ (i.e., $\text{JS} \in \mathbb{R}^{[0; \text{log} 2]}$; \citealp{Lin1991}: 147; \citealp{Nielsen2019}: 3), which means that the upper bound is $1$ if using base $2$ for the logarithm. This $0-1$ bound can be considered common for measures within the social sciences, for example, explained variance ($R^2$, \citealp{Gelmanetal2019}), composite reliability ($\rho_c$; \citealp{FornellAndLarcker1981}), and Sklar's $\omega$ (\citealp{Hughes2023}) share this bound, making this measure more familiar to, and intuitively interpretable by, researchers within that discipline. 
+
+Perhaps more importantly, unlike relative entropy, the JS divergence is symmetric, and by taking its square-root (i.e., $\sqrt{\text{JS}}$), one obtains the \textit{Jensen-Shannon distance} (\textit{JS distance}), which satisfies the triangle inequality (\citealp{Nielsen2019}: 3), making it a proper geometric measure of distance. Hence, the JS distance may ultimately be preferred to the KL divergence as the actual measure to quantify surprise within this conceptualization due to its familiar bounds and more intuitive properties. Its conceptual appropriateness is further corroborated by the notion that it was originally conceptualized in relation to Bayesian decision-making (\citealp{Lin1991}: 147-148), making it a natural choice for use in relation to this Bayesian Information theoretical conceptualization of surprise.
+
+These considerations thus serve this formal conceptualization of surprise by the JS divergence enabling a symmetric measurement of the discrepancy between the prior and posterior distributions, with the JS distance providing an intuitively interpretable quantification of the distance between prior and posterior knowledge, and its $0-1$ bounds (when using base $2$) further permits an interpretation of this distance as the (percentage) degree of surprise. This means that, unlike \citeauthor{IttiAndBaldi2009}'s (\citeyear{IttiAndBaldi2009}) conceptualization of 'wow' units, the JS distance thus provides a measure of the \textit{degree} to which one is 'wow'ed'.
+
+Unlike the \textit{p}-value (as reviewed in Section \ref{sec:problem_pvalue}), the appropriateness of the JS distance is also supported by its limits. While one could intuit that this measure possesses the same mathematical property of even slight discrepancies resulting in a large degree of surprise with a sufficiently large sample size, because ’tomorrow’s prior is today’s posterior’ (\citealp{Lindley1972}: 2), the degree of surprise will tend towards zero across studies in the long run as the prior is iteratively updated with an increasing amount of quality data. Instead of the prior becoming infinitely narrow, it will only become as narrow as needed to efficiently characterize the variability of the population parameter, making some study-specific deviation part of the expectation. This is the inverse result of a procedure based on $p$-values and nil-hypotheses, since this implies that results will inevitably become \textit{unsurprising} as theory is perfected with an increasing amount of data.
+```
+
+In terms of computing the JS distance, if the prior and posterior distribution are Normal, then it is relatively easily estimated using numerical integration. For example, if one again considers the Normal prior distributions in figure (\ref{fig:example-simulated-priors-plot}) in section \ref{sec:bayesian_inference_prior}, with the posterior being equivalent to Prior \#4, then the JS divergence between the posterior and each prior can be approximated as `r JSD_prior1 %>% round_down(digits = digits$text)`, `r JSD_prior2 %>% round_down(digits = digits$text)`, `r JSD_prior3 %>% round_down(digits = digits$text)`, and `r JSD_prior4 %>% round_down(digits = digits$text)` bits, respectively, corresponding to JS distances of `r sqrt(JSD_prior1) %>% round_down(digits = digits$text)`, `r sqrt(JSD_prior2) %>% round_down(digits = digits$text)`, `r sqrt(JSD_prior3) %>% round_down(digits = digits$text)`, and `r sqrt(JSD_prior4) %>% round_down(digits = digits$text)`. Based on this conceptualization, the distance between the posterior and, for example, the second prior can here be meaningfully interpreted as a degree of surprise of `r (sqrt(JSD_prior2)*100) %>% round_down(digits = 1)`\%, which could be interpreted as being 'highly' surprising given its proximity to the upper bound.
+
+These values fit the intuitive expectations about surprise, since the degree of surprise implied by the discrepancy between the posterior and Prior \#4 is effectively zero (i.e., `r (sqrt(JSD_prior4)*100) %>% scrutiny::round_down(digits = 1)`\%), consistent with the complete absence of surprise when results match the theoretical expectations; the degree of surprise is higher when the theoretical expectation is more certain, as revealed by the higher distance between the posterior and the narrower Prior \#2 (i.e., `r (JSD_prior2*100) %>% scrutiny::round_down(digits = 1)`\%) than when compared to the wider Prior \#1 (i.e., `r (JSD_prior1*100) %>% scrutiny::round_down(digits = 1)`\%); and the degree of surprise is also higher if the theoretical expectation incorrectly predicts the magnitude and direction of the results, with the posterior-prior distance being higher for Prior \#3 (i.e., `r (JSD_prior3*100) %>% scrutiny::round_down(digits = 1)`\%) than Prior \#1 (i.e., `r (JSD_prior1*100) %>% scrutiny::round_down(digits = 1)`\%), since the former expects the parameter of interest to be positive when it instead is negative.
+
+These examples have the fundamental limitation of presupposing knowledge of the probability density functions of the prior and posterior. In practice, the prior and posterior need not necessarily be univariate Normal as these examples are, but can be unknown and can take on a many forms, some of which have no closed-form expression. However, this is \textit{not} a critical issue due to having built this conceptualization on Bayesian inference, whose reliance on MCMC procedures theoretically can be used to estimate many types of probability distributions through sampling (see \citealp{Brooksetal2011}).
+
+While this solves the problem of identifying the distributions of the prior and posterior, this does \textit{not} solve the problem that the distributions may not be expressible in closed-form, making it difficult to compute the relative entropies in relation to their mixture distribution, as needed for computing the JS distance. This is a common problem in Information theory (\citealp{Beirlantetal2001}: 11), where, for example, (relative) entropy needs to be computed from estimated probabilities based on the data, which can require large and representative samples (cf. \citealp{Backetal2018}: 1; \citealp{ShurmannAndGrassberger1996}; though see, e.g., \citealp{Bonachelaetal2008, Grassberger1988, Lesneetal2009}). For the continuous case, this is further troubled by the need to instead estimate the probability density of the particular distribution. Fortunately, parametric assumptions can sometimes be justified to ease estimation (e.g., \citealp{Jaynes1968}: 236-237), and a multitude of density estimators otherwise exist (e.g., \citealp{AhmadAndLin1975, Berrettetal2019, DelgadoBonalAndMarshak2019, HallAndMorton1993, PerezCruz2008}).
+
+Despite these limitations, for the purpose of showing the ease by which this conceptualization of surprise may nevertheless be used in applied research, a practical demonstration using one such density estimator to compute the JS distance is provided in the following section.
+
+```{r power_analysis, include = FALSE}
+
+# Conduct power analysis
+sedes <- pwr::pwr.f2.test(u = nrow(df), v = nrow(df)-2, sig.level = alpha, power = 1-beta)$f2 %>% effectsize::f2_to_eta2() %>% sqrt()
+```
+
+```{=latex}
+\section{Demonstration}\label{sec:demonstration}
+
+Having thus far provided a formal (re)conceptualization of surprise specifically suited for the social sciences, this section provides a practical demonstration in relation to empirical data from that field to show how these researchers can use it to measure surprise. In line with the principles of \textit{open science} (\citealp{Christensenetal2019, Xie2014}), all data processing and analysis was done with the $\textsf{R}$ programming language (\citealp{RCoreTeam2025}) in the RStudio IDE (\citealp{PositTeam2025}).\footnote{For software specifications and replication materials, see Section \ref{sec:appendix_software_specifications} of the Appendix.}
+
+This demonstration is based on the research article by \cite{Todorovetal2005} published in the prestigious journal \href{https://www.science.org/journal/science}{\textit{Science}}. Their article details a series of studies conducted on (under)graduate students at \href{https://www.princeton.edu/}{Princeton University} in the United States (US; see \citealp{Todorovetal2005}, and their supplementary materials). In one study, these respondents were individually exposed for 1-second to pairs of standardized black-and-white head-shot photographs of real-world political candidates from the \href{https://democrats.org/}{Democratic party} or the \href{https://www.gop.com/}{Republican party}, who were either the winner or the runner-up to elections for the \href{https://www.senate.gov/}{US Senate} or \href{https://www.house.gov/}{House of Representatives}. Here, they used an RCT design to randomize the sequence of pairs and the left-right placement of photos, with participants being instructed to choose the more competent-looking candidate. Based on this arguably \textit{exogenous} assignment of photos, the authors could credible infer \textit{causation} (cf. \citealp{Holland1986, ImbensAndRubin2015}), stating that these 'inferences of competence based solely on facial appearance predicted the outcomes of U.S. congressional elections better than chance' (\citealp{Todorovetal2005}: 1623). This result was arguably rather surprising, since the dominant theory at the time assumed voting choices to be 'based primarily on rational and deliberative considerations' (\citealp{Todorovetal2005}: 1623). Despite the recognized novelty of these results, the degree of surprise was never quantified, making this study suitable for a demonstration of this paper's conceptualization of surprise.
+```
+
+For this demonstration, a publicly available subset of the data by \cite{Todorovetal2005}, provided in \cite{Imai2017}, is used. This data constitutes a $119$ by $10$ matrix, with no missing values, where each row is a pair of political candidates, while the columns are variables indicating the election year, US state, the name of the winner and runner-up, the political party affiliation  of each candidate, their absolute vote share, and average competence rating by the participants. For strictly informative purposes, despite using a conceptualization of \textit{statistical power} based in Frequentist inference (\citealp{Champely2020}; cf. \citealp{Cohen1988}) $-$ which this conceptualization of surprise is \textit{not} based upon $-$ the data can nevertheless be stated to provide a statistical power of 80\% to detect an effect size $-$ in the form of the \textit{product-moment correlation coefficient} (\textit{r}; \citealp{Bravais1844, Pearson1895}) $-$ as small as $|r| =$ `r sedes` at the 5\% statistical discernibility level.
+
+```{=latex}
+In accordance with \citeauthor{Todorovetal2005} (\citeyear{Todorovetal2005}; see also \citealp{Imai2017}: 139-148), data is processed so that the only variables are a mean competence score (i.e., $C$) and a difference in relative vote share (i.e., $V$) for each candidate. $V$ is then modeled as a conditionally linear-Normal function of $C$, with the coefficient of $C$ (i.e., $\beta_C$) thus being the parameter of interest (i.e., the \textit{estimand}), while an intercept and residual dispersion ($\sigma$) serve as nuisance parameters.
+
+For ease of specifying a prior for $\beta_C$ and $\sigma$, both of these variables are rescaled using \textit{Fisher z-scoring} (henceforth denoted \textit{standardization}; \citealp{Field2018}: 37). By standardizing the variables, this eliminates the need to estimate the intercept and introduces the following bounds for $\beta_C$ and $\sigma$: $-1 \leq \beta_C \leq 1$ and $0 \leq \sigma \leq 1$ (cf. \citealp{Agresti2018}: 273; \citealp{Wooldridge2019}: 184:185), which need to be accounted for in their respective prior specifications.
+
+\vspace{-3em}
+\begin{gather*}\label{eq:model}
+\tag{14}
+V_i | \mu_i, \sigma \sim \mathcal{N}(\mu_i, \sigma^2) \; \text{for} \: i \: \text{in 1, } \dots \text{, } n \\
+\mu_i = \beta_C C_i \; \text{for} \: i \: \text{in 1, } \dots \text{, } n \\
+\beta_C = \mathcal{N}^{[-1;1]}(0, 0.1) \\
+\sigma = \mathcal{N}^{[0;1]}(1, 0.1)
+\end{gather*}
+\vspace{-3em}
+
+Using this paper's formal conceptualization of surprise, the priors for $\beta_C$ and $\sigma$ should ideally be specified so that they accurately reflect the expectations/predictions of theory. Otherwise, the discrepancy between the posterior and prior will otherwise \textit{not} reflect the genuine surprise of the results. While \citeauthor{Todorovetal2005} (\citeyear{Todorovetal2005}: 1623) make numerous arguments that can be used to justify a theoretical expectation of facial competence as having a zero influence on the vote share, the certainty around this expectation is unclear. This is partly because the authors refer to numerous existing studies on facial evaluations, competence, and political candidates (e.g., \citealp{HassinAndTrope2000, Haxbyetal2000, Kinderetal1980, TodorovAndUleman2003, Winstonetal2002}), and while this helps the authors' argument, it also has the effect of reducing the certainty of opposing theories, thus making eventual positive results comparatively less surprising.
+```
+
+```{=latex}
+Nevertheless, for the purposes of this demonstration, the prior for $\beta_C$ is specified as a Normal distribution, with a mean of $0$ and a dispersion of $0.1$. In the context of \citeauthor{Todorovetal2005}'s (\citeyear{Todorovetal2005}) study, this can be taken to reflect a state of knowledge, where one would be comfortably skeptical about the influence of facial competence on vote outcomes. Stated differently, the expectation implied by this prior is that one would believe with 95\% credibility that the absolute effect would maximally correspond to a 'small' or 'medium' effect (i.e., $|r| \approx 0.2$; cf. \citealp{Cohen1988, FunderAndOzer2019, GignacAndSzodorai2016, LovakovAndAgadullina2021}). Using a similar logic for the prior specification of $\sigma$, the statistical model used to estimate $\beta_C$ is formalized using common notation (e.g., \citealp{Gelmanetal2014, LevyAndMislevy2020}) and shown in model (\ref{eq:model}).
+```
+
+This model is then fit to the data using the \texttt{brms} \textsf{R} package (\citealp{Buerkner2017, Buerkner2018}), which exploits the \textit{No-U-Turn sampler} (NUTS; \citealp{HoffmanAndGelman2014}) of the \textit{STAN probabilistic programming language} (\citealp{StanDevelopmentTeam2025a}) to enable an efficient Hamiltonian MCMC sampling (\citealp{Kruschke2014}: 400-416). For the purposes of assessing the convergence of this sampler, `r chains` independent sampling chains are used, each with `r warmup %>% qformat()` warm-up samples to help them identify the posterior in advance of actual sampling, with `r posterior_samples %>% qformat()` samples being drawn in total afterwards. This applies to the sampling of the prior and the posterior distributions, since both are needed for computing the JS distance.
+
+Visual inspections of \textit{trace plots} (\citealp{Kruschke2014}: 179-180) and metric assessments of the \textit{Gelman-Rubin convergence metric} ($\hat{R}$) and the \textit{Monte-Carlo standard error} (MCSE) found results consistent with convergence (i.e., $\hat{R} \leq 0.01$, \citealp{Vehtarietal2021}; $\text{MCSE} \leq 0.01$, \citealp{Kruschke2014}: 186-187). Accounting for autocorrelation in the MCMC samples reveals \textit{effective sample sizes} (ESS) that could be considered sufficiently high ($\text{ESS} \geq 10,000$; \citealp{Kruschke2014}: 182-184). The explanatory power of this model (i.e., its $R^2$; \citealp{Gelmanetal2019}) is `r democratic_relative_support_competence_R2_summary`, which can be interpreted as '`r democratic_relative_support_competence_R2_interpretation$mode`' (cf. \citealp{Cohen1988}) with `r (democratic_relative_support_competence_R2_interpretation$prop*100) %>% scrutiny::round_down(digits = 1)`\% credibility. As revealed by a \textit{posterior predictive p-value} ($PP_P$; \citealp{Gelmanetal1996}) of `r democratic_relative_support_competence_ppp %>% round_up(digits = digits$text)`, this shortcoming could be attributed to the model's tendency to make over-exaggerated predictions.\footnote{The predictive power could possibly be improved if the model instead treated $V$ as being conditionally Beta distributed, which appropriately accounts for its $0-1$ bounds.}
+
+```{r results-table, eval = FALSE}
+# NOT RUN
+
+# Compute results table (Used for creating the displayed LaTeX table)
+results_table %>%
+  knitr::kable(
+    # format = "latex",
+    digits = digits$table,
+    col.names = c("$\\text{Parameter}$", "$\\text{Posterior}$", "$\\hat{R}$", "$\\text{MCSE}$", "$\\text{ESS}$", "$\\text{Prior}$", "$\\text{Surprise}$"),
+    row.names = FALSE,
+    booktabs = TRUE,
+    caption = ("Relationship between evaluated facial competence and relative vote share"),
+    format.args = list(
+      big.mark = ",",
+      scientific = FALSE
+    ),
+    escape = TRUE,
+    align = "c"
+  ) %>%
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    position = "center",
+    # fixed_thead = TRUE,
+    latex_options = c("striped", "repeat_header", "HOLD_position", "scale_down"),
+    protect_latex = TRUE
+  )
+```
+
+\begin{table}[H]
+\small
+\centering
+\caption{Relationship between evaluated facial competence \& relative vote share}\label{tab:results-table}
+\label{tab:democratic-relative-support-competence}
+\resizebox{\textwidth}{!}{%
+  \begin{tabular}{cccccccc}
+  \toprule
+  \textbf{$\hat{\theta}$} & \textbf{Parameter} & \textbf{Posterior} & \textbf{$\hat{R}$} & \textbf{MCSE} & \textbf{ESS} & \textbf{Prior} & \textbf{Surprise} \\
+  \cmidrule(lr){1-8}
+  $\hat{\beta}_C$ & Facial Competence & $.251 \ (.066) \ [.123; .380]$ & 1.001 & .001 & 14,865 & $-.001 \ (.100) \ [-.199; .194]$ & .872 (.001) [.869; .874] \\
+  $\hat{\sigma}$ & RMSE & $.932 \ (.041) \ [.857; 1.000]$ & 1.002 & .000 & 11,603 & $.921 \ (.060) \ [.805; 1.000]$ & .194 (.003) [.189; .198] \\
+  \bottomrule
+  \end{tabular}
+}
+\end{table}
+
+\vspace{-1em}
+\begingroup
+\linespread{1}\selectfont
+\fontsize{8pt}{10pt}\selectfont
+\par\noindent
+\textbf{NOTE}: Mean estimated standardized parameters, with posterior SDs in parentheses and 95\% HDIs in brackets. $n =$ `r nrow(df) %>% qformat()`. MCMC samples $=$ `r posterior_samples %>% qformat()`. $\text{RMSE} =$ Root mean squared error. $\hat{R} =$ Gelman-Rubin convergence metric (\citealp{Vehtarietal2021}). $\text{MCSE} =$ Monte-Carlo standard error (\citealp{Kruschke2014}: 186-187). $\text{ESS} =$ Effective sample size (\citealp{Kruschke2014}: 182-184). Surprise = Jensen-Shannon distance. Bayesian $R^2$ (\citealp{Gelmanetal2019}) $=$ `r democratic_relative_support_competence_R2_summary`. Posterior predictive $p$-value ($PP_P$; \citealp{Gelmanetal1996}) $=$ `r democratic_relative_support_competence_ppp`.
+\par
+\endgroup
+\vspace{1em}
+
+A metric summary of the sampled prior and posterior are provided in table (\ref{tab:democratic-relative-support-competence}), while their distributions are displayed in figure (\ref{fig:democratic-relative-support-competence-prior-posterior}). Inspecting the prior distribution reveals a theoretically expected estimated effect of facial competence on vote share before seeing the data of `r b_democratic_competence_prior_summary`. By comparison, the posterior distribution reveals an expected estimated effect of facial competence on vote share after seeing the data of `r b_democratic_competence_posterior_summary`. Following \cite{Kingetal2000}, this can be meaningfully interpreted as the following: \textit{Ceteris paribus}, as the evaluated facial competence of a political candidate increases by one SD, their relative vote share increases, on average, by `r b_democratic_competence_posterior %>% mean() %>% round_down(digits = digits$text)` SDs, plus or minus `r b_democratic_competence_posterior %>% sd2() %>% round_up(digits = digits$text)` SDs, and between `r (b_democratic_competence_posterior %>% bayestestR::hdi())$CI_low %>% round_down(digits = digits$text)` and `r (b_democratic_competence_posterior %>% bayestestR::hdi())$CI_high %>% round_up(digits = digits$text)` SDs with 95\% credibility. This can be considered a '`r b_democratic_competence_posterior_interpretation$mode`'-sized effect (cf. \citealp{FunderAndOzer2019}) with `r (b_democratic_competence_posterior_interpretation$prop*100) %>% scrutiny::round_down(digits = 1)`\% credibility.
+
+```{=latex}
+\begin{figure}[htbp]
+\centering
+\resizebox{1\linewidth}{!}{\input{Plots/democratic_relative_support_competence_prior_posterior_plot.tikz}}
+\caption{Estimated effect of evaluated facial competence on relative vote share}
+\label{fig:democratic-relative-support-competence-prior-posterior}
+\end{figure}
+```
+\vspace{-1em}
+\begingroup
+\linespread{1}\selectfont
+\fontsize{8pt}{10pt}\selectfont
+\par\noindent
+\textbf{NOTE}: Prior and posterior distributions of the estimated effect of facial competence on relative vote share. Prior/posterior draws = `r posterior_samples %>% qformat()`. The geometrics below the distributions indicate the mode (circle) and the 95\% HDCI (bar). Jensen-Shannon divergence = `r b_democratic_competence_JS_divergence_summary` bits. Results based on data ($n = 119$) by \citeauthor{Todorovetal2005} (\citeyear{Todorovetal2005}; provided in \citealp{Imai2017}).
+\par
+\endgroup
+\vspace{1em}
+
+The regularizing effect of the theoretically-motivated 'skeptical, yet persuadable' prior on the results can be made evident by comparing the posterior to the results from a Frequentist, likelihood-based version of model (\ref{eq:model}). Achieved by simply respecifying the priors as being uniform across the entire range of possible values, this version of the model was also estimated with MCMC and yielded similar diagnostics in terms of sampling convergence, ESS, and MCSE. Its expected estimated effect of facial competence on vote share was `r b_democratic_competence_likelihood_summary`. The relatively substantial, yet discredible, difference between the Bayesian and Frequentist approach (i.e., `r b_democratic_competence_difference_summary`) is likely attributable to the relatively small sample used in this demonstration (i.e., $n = 119$), and it indicates that the prior will have greater influence on an assessment of surprise in relation to this data, since the posterior is relatively sensitive to its specification.
+
+The difference between the posterior and the prior can be summarized as `r b_democratic_competence_posterior_prior_difference_summary`, which quantifies how the prior information about $\beta_C$ has been updated by the data. As mentioned, while this difference does \textit{not} conceptually reflect the degree of surprise, it can support the JS distance in justifying the need to revise or discard theory, because by following abductive reasoning (cf. \citealp{Dellsen2024}) and/or rational decision-making (cf. \citealp{Savage1972}), the posterior provides the exact values that a revised theory will need to expect to better explain this (and previous) data.
+
+Based on this paper's conceptualization, the degree of surprise resulting from this study can then be measured as the JS distance. While the posterior and prior could here be considered approximately Normal $-$ enabling a parametric estimation of their discrepancy (e.g., \citealp{Jaynes1968}: 236-237) $-$ this demonstration instead considers a more generally applicable \textit{non-parametric kernel density plug-in estimator} (KDE) based on \cite{AhmadAndLin1975}. While these types of estimators are imperfect (cf. \citealp{Berrettetal2019, PerezCruz2008}), they can be considered adequate for estimating the densities of the univariate distributions considered here (cf. \citealp{AhmadAndLin1975, HallAndMorton1993, Parzen1962, Rosenblatt1956}), especially given the relatively large number of samples (i.e., $40,000$+). An implementation of a function for computing the JS distance using this estimator is provided in the Appendix (see Section \ref{sec:appendix_jsd_function}), which mimics similar estimators by applying common adjustments to avoid a division by zero (e.g., \citealp{Drost2018}). To make it scaleable for the large number of samples needed to estimate density, it uses an efficient KDE (\citealp{Wand2025}) that for similar reasons has been applied in relation to \textit{Bayes factors} (\citealp{Makowskietal2019b, Wagenmakersetal2010}).
+
+While it can be considered an advantage of the JS divergence that it uses the entirety of the posterior and prior distributions to express surprise, this means that the variability of these distributions cannot be used in the typical manner to derive uncertainty estimates around the computed value (e.g., the 95\% HDI; \citealp{Makowskietal2019b}). Since it is nevertheless necessary to account for the uncertainty of random sampling inherent to MCMC estimation, this limitation can be solved by considering the \textit{non-parametric bootstrap} (\citealp{Efron1979, Efron2003, EfronAndTibshirani1994}). A procedure for deriving uncertainty estimates in relation to the JS divergence can then be trivially conceptualized to involve repeatedly re-sampling the entire prior and posterior distributions, with these random samples being drawn with replacement, until a sufficiently large number of such non-parametric bootstrapped samples have been drawn. By then invoking the standard Frequentist assumptions of inference, uncertainty estimates can then be derived in relation to surprise from this approximated sampling distribution of the JS divergence estimator, for example, as the standard error (i.e., SE) and \textit{bias-corrected and accelerated interval} (i.e., BCaI; \citealp{DiCiccioAndEfron1996, Efron1987, Makowskietal2019b}).
+
+Computing the JS divergence in this way yields an informational divergence between the posterior and prior of `r b_democratic_competence_JS_divergence_summary` bits. This can be translated into a JS distance of `r b_democratic_competence_JS_distance_summary`, which may then be meaningfully interpreted as an expected degree of surprise of `r (mean(b_democratic_competence_JS_distance)*100) %>% scrutiny::round_down(digits = 1)`\%, plus or minus `r (sd(b_democratic_competence_JS_distance)*100) %>% scrutiny::round_down(digits = 1)` \textit{percentage points} (pp), and between `r (bayestestR::bcai(b_democratic_competence_JS_distance)$CI_low*100) %>% scrutiny::round_down(digits = 1)`pp and `r (bayestestR::bcai(b_democratic_competence_JS_distance)$CI_high*100) %>% scrutiny::round_down(digits = 1)`pp with 95\% confidence. This substantial degree of surprise is consistent with the informal, qualitative assessment of the results by \cite{Todorovetal2005}, though the approach used here has the advantage of enabling surprise to be put into an exact number.
+
+By comparison, a parametric approach based in numerical integration yields a similar JS divergence of `r b_democratic_competence_JS_divergence_gaussian_summary` bits. Converted, it becomes an expected distance of `r b_democratic_competence_JS_distance_gaussian_summary`, which may then be similarly interpreted. The difference between the approach using the KDE plug-in density estimator and a parametric approach based in numerical integration is a JS distance of `r b_democratic_competence_JS_distance_difference_summary`. Since there is no practical difference, the results could be considered consistent with the interpretation that a parametric assumption of normality would be appropriate for this study.
+
+With the formal conceptualization thus contributed by this paper, \cite{Todorovetal2005} could have used this relatively high degree of surprise to argue for the need to revise or discard theoretical expectations about voter choice based on rational deliberation, with the posterior-prior difference expressing the exact extent to which the expectations would need to be updated to fit the new state of knowledge. As a further caveat, those authors could also have used this degree of surprise to further emphasize the novelty of their results under current theory, thus transparently communicating the scientific relevance of their paper in standardized and mathematical manner.
+
+```{=latex}
+\section{Discussion}\label{sec:discussion}
+
+By having formally (re)conceptualized surprise as the relative entropy between prior and posterior knowledge, measurable as the Jensen-Shannon (JS) distance, this paper has offered an appropriate and practically viable approach to assessing surprise within the social sciences. With a solid foundation in Bayesian inference and Information theory, this is theoretically coherent and superior to a conceptualization based on, or derived from, the \textit{p}-value. Unlike approaches based on the latter, this conceptualization enables researchers to capture theoretical expectations and predictions as states of knowledge that can be explicitly, exhaustively, and transparently specified and visualized as prior probability distributions. These states are then updated based on new data, yielding a posterior probability distribution, coherently reflecting how expectations and predictions should be adjusted to better fit such data in the future. The relative entropy between this prior and posterior state is indicative of their discrepancy, which can be suitably quantified as the JS distance to appropriately and meaningfully measure the degree of surprise induced by the results.
+
+This conceptualization can be considered a novel contribution for the social sciences and part of a larger movement across scientific disciplines that call for the adoption of a formal conceptualization of surprise based in Bayesian inference and Information theory (e.g., \citealp{BencomoAndBelaggoun2014, Burkhartetal2025, BurnhamAndAnderson2001, IttiAndBaldi2009, Melloetal2025, Seeharsetal2014}). Indeed, it may be considered a strength of this conceptualization that it uses a foundation similar to other contributions, since this may hopefully lead to a more standardized conceptualization of surprise across the scientific disciplines.
+
+However, as opposed to the arguments of some authors within this movement (e.g., \citealp{IttiAndBaldi2009}), this paper does \textit{not} make the claim that this conceptualization's use of Bayesian inference results in surprise becoming inherently 'subjective'. Instead, it merely enables the measure to be able to account for the (inter-)subjective nature of surprise, and it will be no more subjective than any alternative as long as it is used in relation to sound theory, methodological rigor, and quality data. As a similar point of contention, while many within this movement recommend using the Kullback-Leibler (KL) divergence to quantify surprise (e.g., \citealp{BencomoAndBelaggoun2014, IttiAndBaldi2009}), this paper instead recommends using the Jensen-Shannon distance. While the KL divergence may be suitable for some disciplines, the JS distance was preferred here based on its mathematical and interpretative qualities that make it arguably better suited for application within the context of the social sciences.
+
+While the demonstration in section \ref{sec:demonstration} showcased how the JS distance can be implemented on empirical data by social science researchers, the implementation was limited to \textit{bivariate} comparisons of distributions of prior and posterior parameters. While that could be considered sufficient for many practical applications, researchers will sometimes be in possession of \textit{multivariate} prior and posterior distributions whose discrepancies would need to be assessed \textit{simultaneously} across all estimated model parameters (i.e., in multivariate space). For example, a researcher may want to quantify the \textit{degree of surprise of the statistical model}, which would require an assessment of all parameters of the model simultaneously, instead of just pair-wise comparisons of its individual parameters. Fortunately, this limitation can also be addressed by the JS distance, since it naturally extends to multivariate space. As based in the conceptualization contributed by this paper, surprise thus remains the relative entropy between prior and posterior knowledge, even in multivariate space. Since the density estimator demonstrated here is less reliable in multivariate space, a solution could instead involve a \textit{$k$-nearest-neighbor estimator} based on \citeauthor{KozachenkoAndLeonenko1987} (\citeyear{KozachenkoAndLeonenko1987}; see, e.g., \citealp{PerezCruz2008}), but a practical demonstration is beyond the scope of this paper.
+
+In terms of interpreting the degree of surprise as reflected by the JS distance, while it could be helpful to derive formal guidelines, this paper instead leaves it open for the peers within the social sciences to arrive upon such consensus. As opposed to guidelines derived on a theoretical basis and applied across fields indiscriminately (e.g., \citealp{Cohen1988}), the approach recommended by this paper is instead to derive them empirically from social scientific research to make the guidelines as appropriate as possible for the unique context of this discipline (see, e.g., \citealp{FunderAndOzer2019, GignacAndSzodorai2016, LovakovAndAgadullina2021}). Since surprise, at least as measured by the JS distance, is a continuous phenomenon, these guidelines should also avoid oversimplifying interpretation by arbitrarily discretizing it with sharp interpretive thresholds (cf. \citealp{Field2018}: 117). Once derived, they should ideally be communicated with caution and in a way that emphasizes that they are merely \textit{guidelines} and \textit{not} strict instructions, since an interpretation of surprise is always specific to the context of the particular study.
+
+In stating this, it is nevertheless necessary to disclaim that this conceptualization of surprise is immune to misuse. While statistics based in Bayesian inference or Information theory are sometimes used for the purposes of model fitting and selection (\citealp{Mielniczuk2022, Vehtarietal2017}; e.g., \citealp{Akaike1973, Schwarz1978, Watanabe2010}), it should here be emphasized that no measure related to this conceptualization is intended for such purposes. Accordingly, the JS distance is \textit{not} a metric that social science researchers should deliberately try to maximize \textit{nor} minimize. An appropriate exception to this involves social theorists who formulate, revise, or discard theory, since in doing this, they either directly or indirectly seek to minimize surprise so as to bring expectations in greater alignment with real-world phenomena (cf. \citealp{Dellsen2024, Lakatos1970, Miller1974, Popper2002}).
+
+On a similar note, for the degree of surprise as reflected by the JS distance to be meaningful and interpretable, it is further emphasized that it must at least be based on the discrepancy between (1) a genuine, comprehensive, and ideally intersubjectively credible prior specification; (2) a posterior that is the result of quality data of a sufficient size, collected using a rigorous methodology, representative of the population of interest; and (3) that the statistical model used to estimate the parameters of interest should \textit{not} make assumptions violated by that data. With unchecked researcher discretion in specifying the prior, any results could be made to appear surprising, and justifying one's prior specification is thus of utmost importance to any credible assessment of surprise. With questionable data, any results can similarly be made surprising under many prior specifications, though this is \textit{not} a unique limitation of this conceptualization, since quality data is paramount to statistics (\citealp{Agresti2018}). Researchers who adopt this conceptualization are therefore made aware that the mantra \textit{Garbage-in, garbage-out} (GIGO; \citealp{YoderWise2023}) similarly applies to a measurement of surprise.
+
+Despite these notes of caution, this formal conceptualization of surprise will likely prove useful for most quantitative studies conducted within the social sciences, since the surprise of results is generally an interesting and important quantity to assess (cf. \citealp{FrenchAndMurphy2023, IvanovaAndVaidyanathan2024, Wangetal2024}). Because this involves a discrepancy between results and expectations/predictions based in theory, this of course presupposes the existence of a theory to compare the results against, which makes an assessment of surprise arguably more appropriate for \textit{confirmatory} studies (\citealp{Wagenmakersetal2012}) as opposed to \textit{exploratory} studies (\citealp{Tukey1977}). At the same time, given the continuity of these opposite approaches (cf. \citealp{FifeAndRodgers2022, Tukey1980}), it could still be applied to the latter case, since weak expectations could be formulated based on intuition. This enables exploratory studies to compare their results to these intuitive expectations to compute surprise, though it should be noted that such results will be more likely to appear surprising, since theories in their infancy will likely require numerous revisions before they will achieve a predictive power on par that of rigorously tested theories. With that in mind, this paper encourages researchers to adopt this conceptualization, report and interpret the JS distance as surprise when appropriate, and use this value to assess the novelty of their results.
+```
+
+```{=latex}
+\section{Conclusion}\label{sec:conclusion}
+
+This paper has reviewed the informal conceptualization of surprise within the social sciences, demonstrated why a practice involving the \textit{p}-value as an implicit measure of surprise is conceptually and mathematically inappropriate, and based in Bayesian inference and Information theory, provided a formal (re)conceptualization of surprise as the relative entropy between prior and posterior knowledge, which can be appropriately measured using the Jensen-Shannon distance. The conceptualization of surprise as proposed here was found to fit the informal characteristics that social science researchers intuitively associate with surprise, making it suited for use within this discipline, and unlike the \textit{p}-value, it is theoretically coherent and possesses appropriate mathematical properties. The contribution of this paper is useful for most quantitative social research and adds to a growing number of interdisciplinary studies calling for a formal conceptualization of surprise based in Bayesian inference and Information theory.
+```
+
+```{=latex}
+\section{Declarations}\label{sec:declarations}
+
+\begingroup
+
+\par\noindent
+
+\textbf{Author contributions}
+\begin{itemize}
+\item Emil Niclas Meyer-Hansen independently conceived, conceptualized, and implemented the Bayesian Information-theoretic formal conceptualization of surprise for the social sciences, wrote the $\textsf{R}$ function used here for computing the Jensen-Shannon divergence/distance, conducted the analyses, and wrote this manuscript.
+\end{itemize}
+
+\textbf{Funding}
+\begin{itemize}
+\item Emil Niclas Meyer-Hansen received no funding to assist with the creation of this paper.
+\end{itemize}
+
+\textbf{Conflicts of interest}
+\begin{itemize}
+\item Emil Niclas Meyer-Hansen has no competing interests to declare that are relevant to the content of this paper.
+\end{itemize}
+
+\textbf{Availability of Data, Code \& Materials}
+\begin{itemize}
+\item Simulated data, code, and materials are made freely available on the OSF page of this study (DOI: \href{https://doi.org/10.17605/OSF.IO/GQ6C8}{10.17605/OSF.IO/GQ6C8}). The empirical data used in this paper is a subset of the data by \cite{Todorovetal2005} and is made freely available by \cite{Imai2017}.
+\end{itemize}
+
+\textbf{Acknowledgements}
+\begin{itemize}
+\item This paper was made possible by building on insights and contributions from numerous researchers across disciplines, in particular Laurent Itti and Pierre Baldi, who were among the first to offer a formal conceptualization of surprise based in Bayesian inference and Information theory.
+\end{itemize}
+
+\endgroup
+```
+
+```{=latex}
+\bibliographystyle{apalike}
+\bibliography{Quantifying-Surprise-v2026-03-01-13-00}
+```
+
+```{=latex}
+\section{Appendix}\label{sec:appendix}
+
+This appendix contains the specifications for the software used in this paper (Section \ref{sec:appendix_software_specifications}) and an \textsf{R} function implementing the KDE plug-in estimator used to compute the Jensen-Shannon distance from MCMC samples in section \ref{sec:demonstration} (Section \ref{sec:appendix_jsd_function}). Besides this appendix, supplementary materials, including replication files, are made freely available online on the OSF project page dedicated to this paper (DOI: \href{https://doi.org/10.17605/OSF.IO/GQ6C8}{10.17605/OSF.IO/GQ6C8}).
+```
+
+```{=latex}
+\subsection{Software Specifications}\label{sec:appendix_software_specifications}
+```
+
+This document was written with \textit{markdown} \citep{Gruber2014} and \LaTeX (\citealp{Lamport1986, LaTeXProject2025}), using pdf\TeX (v3.141592653-2.6-1.40.2; MiK\TeX [v25.4]; \citealp{ThanhAndKnuth2025}). Compiled on a `r sessionInfo()$running` operating system (OS; \citealp{Microsoft2024}) on the `r format(Sys.time(), "%Y-%m-%d %H:%M %Z")` (Timezone: `r sessionInfo()$tzone`), the machine has `r parallel::detectCores()` cores available, and the range of doubles is
+```{r, echo = FALSE, results = "asis"}
+paste0("$", .Machine$double.xmin %>% format(scientific = TRUE, digits = digits$table) %>% str_replace_all("e", "\\\\times10^{"), "}$") %>% cat()
+```
+ - 
+```{r, echo = FALSE, results = "asis"}
+paste0("$", .Machine$double.xmax %>% format(scientific = TRUE, digits = digits$table) %>% str_replace_all("e", "\\\\times10^{"), "}$.") %>% cat()
+```
+
+All data processing and analyses were conducted on the aforementioned software using the $\textsf{R}$ programming language (`r r_version`; \citealp{RCoreTeam2025}) in the RStudio IDE (`r rstudioapi::versionInfo()$version`; \citealp{PositTeam2025}), which besides the base $\textsf{R}$ packages by \cite{RCoreTeam2025} used the following packages (including their dependencies, which were \textit{not} necessarily used):
+\texttt{abind} (v`r packageVersion("abind")`; \citealp{PlateAndHeiberger2024}),
+\texttt{arrayhelpers} (v`r packageVersion("arrayhelpers")`; \citealp{Beleites2020}),
+\texttt{backports} (v`r packageVersion("backports")`; \citealp{Langetal2024}),
+\texttt{base64enc} (v`r packageVersion("base64enc")`; \citealp{Urbanek2015}),
+\texttt{bayestestR} (v`r packageVersion("bayestestR")`; \citealp{Makowskietal2019b}),
+\texttt{bayesplot} (v`r packageVersion("bayesplot")`; \citealp{Gabryetal2019}),
+\texttt{bookdown} (v`r packageVersion("bookdown")`; \citealp{Xie2016, Xie2025a}),
+\texttt{boot} (v`r packageVersion("boot")`; \citealp{CantyAndRipley2024, DavisonAndHinkley1997}),
+\texttt{bridgesampling} (v`r packageVersion("bridgesampling")`; \citealp{Gronauetal2020}),
+\texttt{brms} (v`r packageVersion("brms")`; \citealp{Buerkner2017, Buerkner2018}),
+\texttt{Brobdingnag} (v`r packageVersion("Brobdingnag")`; \citealp{Hankin2007}),
+\texttt{broom} (v`r packageVersion("broom")`; \citealp{Robinsonetal2025}),
+\texttt{cachem} (v`r packageVersion("cachem")`; \citealp{Chang2024a}),
+\texttt{checkmate} (v`r packageVersion("checkmate")`; \citealp{Lang2017}),
+\texttt{cli} (v`r packageVersion("cli")`; \citealp{Csardi2025}),
+\texttt{cluster} (v`r packageVersion("cluster")`; \citealp{Maechleretal2024}),
+\texttt{coda} (v`r packageVersion("coda")`; \citealp{Plummeretal2006}),
+\texttt{codetools} (v`r packageVersion("codetools")`; \citealp{Tierney2024}),
+\texttt{colorspace} (v`r packageVersion("colorspace")`; \citealp{Zeileisetal2009, Zeileisetal2020}),
+\texttt{curl} (v`r packageVersion("curl")`; \citealp{Ooms2025a}),
+\texttt{data.table} (v`r packageVersion("data.table")`; \citealp{Barrettetal2025}),
+\texttt{datawizard} (v`r packageVersion("datawizard")`; \citealp{Patiletal2022}),
+\texttt{devtools} (v`r packageVersion("devtools")`; \citealp{Wickhametal2022}),
+\texttt{digest} (v`r packageVersion("digest")`; \citealp{Eddelbuettel2024}),
+\texttt{distributional} (v`r packageVersion("distributional")`; \citealp{OHaraWildetal2024}),
+\texttt{dplyr} (v`r packageVersion("dplyr")`; \citealp{Wickhametak2023}),
+\texttt{effectsize} (v`r packageVersion("effectsize")`; \citealp{BenShacharetal2020}),
+\texttt{ellipsis} (v`r packageVersion("ellipsis")`; \citealp{Wickham2021}),
+\texttt{evaluate} (v`r packageVersion("evaluate")`; \citealp{WickhamAndXie2025}),
+\texttt{farver} (v`r packageVersion("farver")`; \citealp{Pedersenetal2024}),
+\texttt{fastmap} (v`r packageVersion("fastmap")`; \citealp{Chang2024b}),
+\texttt{filehash} (v`r packageVersion("filehash")`; \citealp{Peng2006}),
+\texttt{forcats} (v`r packageVersion("forcats")`; \citealp{Wickham2023a}),
+\texttt{foreach} (v`r packageVersion("foreach")`; \citealp{MicrosoftAndWeston2022}),
+\texttt{foreign} (v`r packageVersion("foreach")`; \citealp{MicrosoftAndWeston2022}),
+\texttt{Formula} (v`r packageVersion("Formula")`; \citealp{ZeileisAndCroissant2010}),
+\texttt{fs} (v`r packageVersion("fs")`; \citealp{Hesteretal2025}),
+\texttt{gdata} (v`r packageVersion("gdata")`; \citealp{Warnesetal2024}),
+\texttt{generics} (v`r packageVersion("generics")`; \citealp{Wickhametal2025a}),
+\texttt{ggdist} (v`r packageVersion("ggdist")`; \citealp{Kay2024a, Kay2025}),
+\texttt{ggplot2} (v`r packageVersion("ggplot2")`; \citealp{Wickham2016}),
+\texttt{glmnet} (v`r packageVersion("glmnet")`; \citealp{Friedmanetal2010}),
+\texttt{glue} (v`r packageVersion("glue")`; \citealp{HesterAndBryan2024}),
+\texttt{gridExtra} (v`r packageVersion("gridExtra")`; \citealp{Auguie2017}),
+\texttt{gtable} (v`r packageVersion("gtable")`; \citealp{WickhamAndPedersen2024}),
+\texttt{gtools} (v`r packageVersion("gtools")`; \citealp{Warnesetal2023}),
+\texttt{Hmisc} (v`r packageVersion("Hmisc")`; \citealp{HarrellJr2025}),
+\texttt{hms} (v`r packageVersion("hms")`; \citealp{Muller2023}),
+\texttt{htmlTable} (v`r packageVersion("htmlTable")`; \citealp{Gordonetal2024}),
+\texttt{htmltools} (v`r packageVersion("htmltools")`; \citealp{Chengetal2024}),
+\texttt{htmlwidgets} (v`r packageVersion("htmlwidgets")`; \citealp{Vaidyanathanetal2023}),
+\texttt{httpuv} (v`r packageVersion("httpuv")`; \citealp{Chengetal2025}),
+\texttt{HuraultMisc} (v`r packageVersion("HuraultMisc")`; \citealp{Hurault2021}),
+\texttt{inline} (v`r packageVersion("inline")`; \citealp{Sklyaretal2025}),
+\texttt{insight} (v`r packageVersion("insight")`; \citealp{Ludeckeetal2019}),
+\texttt{iterators} (v`r packageVersion("iterators")`; \citealp{RevolutionAnalyticsAndWeston2022}),
+\texttt{jomo} (v`r packageVersion("jomo")`; \citealp{QuartagnoAndCarpenter2023}),
+\texttt{jsonlite} (v`r packageVersion("jsonlite")`; \citealp{Ooms2014}),
+\texttt{kableExtra} (v`r packageVersion("kableExtra")`; \citealp{Zhu2024}),
+\texttt{KernSmooth} (v`r packageVersion("KernSmooth")`; \citealp{Wand2025}),
+\texttt{knitr} (v`r packageVersion("knitr")`; \citealp{Xie2014, Xie2015, Xie2025b}),
+\texttt{later} (v`r packageVersion("later")`; \citealp{Changetal2025a}),
+\texttt{lattice} (v`r packageVersion("lattice")`; \citealp{Sarkar2008}),
+\texttt{lifecycle} (v`r packageVersion("lifecycle")`; \citealp{HenryAndWickham2023}),
+\texttt{lme4} (v`r packageVersion("lme4")`; \citealp{Batesetal2015}),
+\texttt{loo} (v`r packageVersion("loo")`; \citealp{Vehtarietal2024}),
+\texttt{lubridate} (v`r packageVersion("lubridate")`; \citealp{GrolemundAndWickham2011}),
+\texttt{magrittr} (v`r packageVersion("magrittr")`; \citealp{BacheAndWickham2022}),
+\texttt{MASS} (v`r packageVersion("MASS")`; \citealp{VenablesAndRipley2002}),
+\texttt{Matrix} (v`r packageVersion("Matrix")`; \citealp{Batesetal2025}),
+\texttt{matrixStats} (v`r packageVersion("matrixStats")`; \citealp{Bengtsson2025}),
+\texttt{memoise} (v`r packageVersion("memoise")`; \citealp{Wickhametal2021}),
+\texttt{mice} (v`r packageVersion("mice")`; \citealp{vanBuurenAndGroothuisOudshoorn2011}),
+\texttt{mime} (v`r packageVersion("mime")`; \citealp{Xie2025c}),
+\texttt{miniUI} (v`r packageVersion("miniUI")`; \citealp{Cheng2025a}),
+\texttt{minqa} (v`r packageVersion("minqa")`; \citealp{Batesetal2024}),
+\texttt{mitml} (v`r packageVersion("mitml")`; \citealp{Grundetal2023}),
+\texttt{mvtnorm} (v`r packageVersion("mvtnorm")`; \citealp{GenzAndBretz2009}),
+\texttt{nlme} (v`r packageVersion("nlme")`; \citealp{Pinheiroetal2025}),
+\texttt{nloptr} (v`r packageVersion("nloptr")`; \citealp{Johnson2008}),
+\texttt{nnet} (v`r packageVersion("nnet")`; \citealp{VenablesAndRipley2002}),
+\texttt{pacman} (v`r packageVersion("pacman")`; \citealp{RinkerAndKurkiewicz2018}),
+\texttt{pan} (v`r packageVersion("pan")`; \citealp{ZhaoAndSchafer2023}),
+\texttt{parameters} (v`r packageVersion("parameters")`; \citealp{Ludeckeetal2020}),
+\texttt{pillar} (v`r packageVersion("pillar")`; \citealp{MullerAndWickham2025a}),
+\texttt{pkgbuild} (v`r packageVersion("pkgbuild")`; \citealp{Wickhametal2025b}),
+\texttt{pkgconfig} (v`r packageVersion("pkgconfig")`; \citealp{Csardi2019}),
+\texttt{pkgload} (v`r packageVersion("pkgload")`; \citealp{Wickhametal2024a}),
+\texttt{Polychrome} (v`r packageVersion("Polychrome")`; \citealp{Coombesetal2019}),
+\texttt{posterior} (v`r packageVersion("posterior")`; \citealp{Burkneretal2025}),
+\texttt{profvis} (v`r packageVersion("profvis")`; \citealp{Wickhametal2024b}),
+\texttt{promises} (v`r packageVersion("promises")`; \citealp{Cheng2025b}),
+\texttt{purrr} (v`r packageVersion("purrr")`; \citealp{WickhamAndHenry2025}),
+\texttt{pwr} (v`r packageVersion("pwr")`; \citealp{Champely2020}),
+\texttt{QuickJSR} (v`r packageVersion("QuickJSR")`; \citealp{Johnson2025}),
+\texttt{R6} (v`r packageVersion("R6")`; \citealp{Chang2025}),
+\texttt{rbibutils} (v`r packageVersion("rbibutils")`; \citealp{BoshnakovAndPutman2024}),
+\texttt{RColorBrewer} (v`r packageVersion("RColorBrewer")`; \citealp{Neuwirth2022}),
+\texttt{Rcpp} (v`r packageVersion("Rcpp")`; \citealp{Eddelbuettel2013, EddelbuettelAndBalamuta2018, EddelbuettelAndFrancois2011, Eddelbuetteletal2025}),
+\texttt{RcppParallel} (v`r packageVersion("RcppParallel")`; \citealp{Allaireetal2025}),
+\texttt{Rdpack} (v`r packageVersion("Rdpack")`; \citealp{Boshnakov2025}),
+\texttt{readr} (v`r packageVersion("readr")`; \citealp{Wickhametal2024c}),
+\texttt{reformulas} (v`r packageVersion("reformulas")`; \citealp{Bolker2025}),
+\texttt{remotes} (v`r packageVersion("remotes")`; \citealp{Csardietal2024}),
+\texttt{rlang} (v`r packageVersion("rlang")`; \citealp{HenryAndWickham2025}),
+\texttt{rmarkdown} (v`r packageVersion("rmarkdown")`; \citealp{Allaireetal2024}),
+\texttt{rpart} (v`r packageVersion("rpart")`; \citealp{TherneauAndAtkinson2025}),
+\texttt{rstan} (v`r packageVersion("rstan")`; \citealp{StanDevelopmentTeam2025b}),
+\texttt{rstantools} (v`r packageVersion("rstantools")`; \citealp{Gabryetal2024}),
+\texttt{rstudioapi} (v`r packageVersion("rstudioapi")`; \citealp{Usheyetal2024}),
+\texttt{scales} (v`r packageVersion("scales")`; \citealp{Wickhametal2025c}),
+\texttt{scatterplot3d} (v`r packageVersion("scatterplot3d")`; \citealp{LiggesAndMachler2003}),
+\texttt{scrutiny} (v`r packageVersion("scrutiny")`; \citealp{Jung2024}),
+\texttt{sessioninfo} (v`r packageVersion("sessioninfo")`; \citealp{Wickhametal2025d}),
+\texttt{shape} (v`r packageVersion("shape")`; \citealp{Soetaert2024}),
+\texttt{shiny} (v`r packageVersion("shiny")`; \citealp{Changetal2025b}),
+\texttt{StanHeaders} (v`r packageVersion("StanHeaders")`; \citealp{StanDevelopmentTeam2020}),
+\texttt{stringi} (v`r packageVersion("stringi")`; \citealp{Gagolewski2022}),
+\texttt{stringr} (v`r packageVersion("stringr")`; \citealp{Wickham2023b}),
+\texttt{survival} (v`r packageVersion("survival")`; \citealp{Therneau2024}),
+\texttt{svUnit} (v`r packageVersion("svUnit")`; \citealp{Grosjean2025}),
+\texttt{tensorA} (v`r packageVersion("tensorA")`; \citealp{vandenBoogaart2023}),
+\texttt{tibble} (v`r packageVersion("tibble")`; \citealp{MullerAndWickham2025b}),
+\texttt{tidybayes} (v`r packageVersion("tidybayes")`; \citealp{Kay2024b}),
+\texttt{tidyr} (v`r packageVersion("tidyr")`; \citealp{Wickhametal2024d}),
+\texttt{tidyselect} (v`r packageVersion("tidyselect")`; \citealp{HenryAndWickham2024}),
+\texttt{tidyverse} (v`r packageVersion("tidyverse")`; \citealp{Wickhametal2019}),
+\texttt{tikzDevice} (v`r packageVersion("tikzDevice")`; \citealp{SharpsteenAndBracken2023}),
+\texttt{timechange} (v`r packageVersion("timechange")`; \citealp{Spinu2024}),
+\texttt{tzdb} (v`r packageVersion("tzdb")`; \citealp{Vaughan2025}),
+\texttt{urlchecker} (v`r packageVersion("urlchecker")`; \citealp{RCoreteametal2021}),
+\texttt{usethis} (v`r packageVersion("usethis")`; \citealp{Wickhametal2024e}),
+\texttt{V8} (v`r packageVersion("V8")`; \citealp{Ooms2025b}),
+\texttt{vctrs} (v`r packageVersion("vctrs")`; \citealp{Wickhametal2023}),
+\texttt{weights} (v`r packageVersion("weights")`; \citealp{Pasek2025}),
+\texttt{withr} (v`r packageVersion("withr")`; \citealp{Hesteretal2024}),
+\texttt{xfun} (v`r packageVersion("xfun")`; \citealp{Xie2025d}), and
+\texttt{xtable} (v`r packageVersion("xtable")`; \citealp{Dahletal2019}).
+For the random number generator used by MCMC, the seed (i.e., `r SEED %>% format(scientific = FALSE)`) was exogenously predetermined by the \texttt{random} $\textsf{R}$ package (v`r packageVersion("random")`; \citealp{Eddelbuettel2017}).
+
+```{=latex}
+\subsection{Jensen-Shannon distance function}\label{sec:appendix_jsd_function}
+```
+
+An implementation of the Jensen-Shannon distance function using $\textsf{R}$ (`r r_version`; \citealp{RCoreTeam2025}), and an example of its application on a posterior and prior derived from Bayesian inference in relation to empirical data using the \texttt{brms} $\textsf{R}$ package (v`r packageVersion("brms")`; \citealp{Buerkner2017, Buerkner2018}), are provided in the code below:
+
+```{=latex}
+\begin{lstlisting}
+# Function for computing the Jensen-Shannon (JS) distance/divergence based on MCMC samples from the posterior and prior distributions using default parameter values
+#
+# @param p An n-dimensional vector of samples from a probability distribution
+# @param q An n-dimensional vector of samples from a probability distribution
+# @param n An integer indicating the length of the grid used for estimating the densities
+# @param epsilon A small, positive real-valued scalar used to avoid instances of division by zero
+# @param base A positive real-valued scalar used as the base of the logarithmic function
+# @param type A string that determines whether the output is the JS distance or divergence
+# @return A non-negative real-valued scalar reflecting the estimated discrepancy between the distributions
+
+# install.packages("KernSmooth")
+JSD <- function(p = NULL, q = NULL, n = 10000, epsilon = 1e-05, base = 2, type = c("Distance", "Divergence")){
+  # Exception handling
+  stopifnot(length(p) > 0)
+  stopifnot(length(q) > 0)
+  stopifnot(length(p)==length(q))
+  stopifnot(is.numeric(p))
+  stopifnot(is.numeric(q))
+  stopifnot(length(n) == 1)
+  stopifnot(is.numeric(n))
+  stopifnot(n > 1)
+  n <- ceiling(n)
+  stopifnot(length(epsilon) == 1)
+  stopifnot(is.numeric(epsilon))
+  stopifnot(epsilon > 0)
+  stopifnot(length(base) == 1)
+  stopifnot(is.numeric(base))
+  stopifnot(base > 0)
+  type <- match.arg(type)
+  
+  # Define a common grid
+  grid <- seq(min(c(p, q)), max(c(p, q)), length.out = n)
+  
+  # Use Kernsmooth::bkde to estimate densities on the same grid if available, otherwise use stats::density
+  if(requireNamespace("KernSmooth", quietly = TRUE)){
+    require(KernSmooth)
+    p_density <- KernSmooth::bkde(p, gridsize = n, range.x = c(min(c(p, q)), max(c(p, q))))$y
+    q_density <- KernSmooth::bkde(q, gridsize = n, range.x = c(min(c(p, q)), max(c(p, q))))$y
+  }
+  else{
+    p_density <- stats::density(p, bw = "SJ", kernel = "gaussian", from = min(grid), to = max(grid), n = length(grid))$y
+    q_density <- stats::density(q, bw = "SJ", kernel = "gaussian", from = min(grid), to = max(grid), n = length(grid))$y
+  }
+  
+  # Avoid any zeros
+  p_density <- pmax(p_density, epsilon)
+  q_density <- pmax(q_density, epsilon)
+  
+  # Ensure normalized densities
+  dx <- diff(grid)[1]
+  p_density <- p_density / sum(p_density * dx)
+  q_density <- q_density / sum(q_density * dx)
+  
+  # Compute mixture
+  m <- 0.5 * (p_density + q_density)
+  
+  # Compute JSD
+  jensen_shannon_divergence <- 0.5 * sum(p_density * log(p_density / m, base = base) * dx) +
+         0.5 * sum(q_density * log(q_density / m, base = base) * dx)
+  
+  # Return JSD
+  if(type == "Distance"){
+    jensen_shannon_distance <- sqrt(jensen_shannon_divergence)
+    return(jensen_shannon_distance)
+  }
+  else{
+    return(jensen_shannon_divergence)
+  }
+}
+\end{lstlisting}
+```
+
+```{=latex}
+\begin{lstlisting}
+# Example
+# install.packages("tidyverse")
+library("tidyverse")
+
+# Load data
+# install.packages("devtools")
+# library("devtools")
+# devtools::install_github("kosukeimai/qss-package", build_vignettes = TRUE)
+data(face, package = "qss")
+df <- face; rm(face)
+
+# Recode data
+df <- df %>%
+  mutate(
+  d.share = d.votes / (d.votes + r.votes),
+  r.share = r.votes / (d.votes + r.votes),
+  d.diff.share = d.share - r.share,
+  d.diff.share = standardize(d.diff.share),
+  d.comp = standardize(d.comp)
+) %>%
+  select(d.comp, d.diff.share) %>%
+  rename(
+    democratic_competence = d.comp,
+    democratic_relative_support = d.diff.share
+  )
+
+# Standardize data matrix
+# install.packages("datawizard")
+library("datawizard")
+df <- apply(df, 2, datawizard::standardize) %>% as.data.frame()
+
+# Specify MCMC
+# install.packages("parallel")
+library("parallel")
+posterior_samples <- 4000
+chains <- cores <- parallel::detectCores()-1
+warmup <- 1000
+iter <- ceiling((posterior_samples / chains) + warmup)
+posterior_samples <- (iter - warmup)*chains
+
+# Fit BGLM
+# install.packages("brms")
+library("brms")
+democratic_relative_support_competence_fit <- brms::brm(
+  democratic_relative_support ~ 0 + democratic_competence,
+  data = df,
+  prior = c(
+    brms::set_prior("normal(0, 0.1)", class = "b", lb = -1, ub = 1),
+    brms::set_prior("normal(1, 0.1)", class = "sigma", lb = 0, ub = 1)
+  ),
+  family = gaussian(
+    link = "identity"
+  ),
+  sample_prior = "yes",
+  cores = cores,
+  chains = chains,
+  seed = 896663432,
+  iter = iter,
+  warmup = warmup
+)
+# summary(democratic_relative_support_competence_fit)
+
+# Extract draws
+democratic_relative_support_competence_draws <- brms::as_draws_df(democratic_relative_support_competence_fit)
+b_democratic_competence_posterior <- democratic_relative_support_competence_draws$b_democratic_competence
+b_democratic_competence_prior <- democratic_relative_support_competence_draws$prior_b
+
+# Compute JS distance
+JSD(b_democratic_competence_prior, b_democratic_competence_posterior)
+\end{lstlisting}
+```
