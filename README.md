@@ -33,7 +33,7 @@ Generally in the social sciences, an empirical result is informally deemed ‘su
 ## Changelog
 - **2026-06-29 16:24 CEST**
     - [Version 2026-06-29-16-24] - Working paper (Minor revisions).
-        - Minor revisions of multiple section (e.g., rephrasings)
+        - Minor revisions of multiple sections (e.g., rephrasings)
         - Corrected typos in equations (4) and (13).
         - Updated MCSE and ESS formula to latest versions.
         - Replicated results by re-running all analyses of the data.
