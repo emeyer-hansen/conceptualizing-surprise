@@ -1,11 +1,11 @@
 [_metadata_:author]:- "Emil Niclas Meyer-Hansen"
-[_metadata_:date]:- "2026-03-01"
+[_metadata_:date]:- "2026-06-29"
 [_metadata_:tags]:- "markdown metadata"
 # Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information Theoretical Approach for the Social Sciences
 
 *Emil Niclas Meyer-Hansen*
 
-2026-03-01
+2026-06-29
 
 A formal (re)conceptualization of surprise is developed by the author for the social sciences in the research paper *Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information Theoretical Approach for the Social Sciences* (see the Abstract below). The paper is currently a work-in-progress. It subscribes to the [*open science standard*](https://www.cos.io/open-science), is partly licensed under the CC BY 4.0 and partly under the GPL-3.0 (see the License below), and it is made freely available in PDF-format.
 
@@ -19,7 +19,7 @@ A formal (re)conceptualization of surprise is developed by the author for the so
 <a id="abstract"></a>
 ## Abstract
 
-Generally in the social sciences, a result is informally deemed 'surprising' if its associated *p*-value is sufficiently small. This implicit interpretation, however, is both conceptually and mathematically inappropriate, and such misuse of the *p*-value can lead to erroneous conclusions about the novelty of results. To solve that issue, this paper builds on Bayesian inference, Information theory, and considerations specific to the social sciences, to argue for the adoption of a more appropriate conceptualization of surprise as the *relative entropy between prior and posterior knowledge*. Novel to the social sciences, this formal conceptualization enables researchers to appropriately measure surprise as the Jensen-Shannon distance, for which the paper contributes with easily implementable software and a demonstration of its use in relation to empirical data.[©](#license)
+Generally in the social sciences, an empirical result is informally deemed ‘surprising’ if its associated *p*-value is sufficiently small. This implicit interpretation, however, is both conceptually and mathematically inappropriate, and such misuse of the *p*-value can lead to erroneous conclusions about the novelty of results. To solve that issue, this paper builds on Bayesian inference, Information theory, and considerations specific to the social sciences, to argue for an adoption of the more appropriate conceptualization of surprise as the *relative entropy between prior and posterior knowledge*. Novel to the social sciences, this formal conceptualization enables researchers to appropriately measure surprise as the Jensen-Shannon distance, for which the paper contributes with easily implementable software and a demonstration of its use in relation to empirical data.[©](#license)
 
 **Keywords**: *Surprise; Novelty; Jensen-Shannon distance; JS distance; Jensen-Shannon divergence; JS divergence; Relative entropy; Kullback-Leibler divergence; KL divergence; Distance; Divergence; Dissimilarity; Differential entropy; Entropy; p-value; S-value; Information theory; Bayesian inference*
 
@@ -31,6 +31,12 @@ Generally in the social sciences, a result is informally deemed 'surprising' if 
 
 <a id="changelog"></a>
 ## Changelog
+- **2026-06-29 16:24 CEST**
+    - [Version 2026-06-29-16-24] - Working paper (Minor revisions).
+        - Minor revisions of multiple section (e.g., rephrasings)
+        - Corrected typos in equations (4) and (13).
+        - Updated MCSE and ESS formula to latest versions.
+        - Replicated results by re-running all analyses of the data.
 - **2026-03-01 13:00 CEST**
     - [Version 2026-03-01-13-00] - Working paper (Major revisions).
         - Major revisions of multiple sections (e.g., new sections added, missing words added, corrected misspellings)
@@ -59,7 +65,7 @@ Building on Bayesian inference, Information theory, and similar conceptualizatio
 
 Please, if you use, refer to, modify, and/or continue the development of this formal conceptualization of surprise for the social sciences, provide proper reference and citation to its founding author. An example of proper citation is provided below:
 ```
-Meyer-Hansen, E. N. (2026): 'Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information Theoretical Approach for the Social Sciences', Open Science Framework, Working paper (v2026-03-01-13-00). DOI: [10.17605/OSF.IO/GQ6C8](https://doi.org/10.17605/OSF.IO/GQ6C8)
+Meyer-Hansen, E. N. (2026): 'Conceptualizing Surprise with the Jensen–Shannon distance: A Bayesian Information Theoretical Approach for the Social Sciences', Open Science Framework, Working paper (v2026-06-29-16-24). DOI: [10.17605/OSF.IO/GQ6C8](https://doi.org/10.17605/OSF.IO/GQ6C8)
 ```
 
 For LaTeX users, a BibTeX entry is provided below:
@@ -70,6 +76,6 @@ For LaTeX users, a BibTeX entry is provided below:
   publisher = {Open Science Framework},
   year = {2025},
   doi = {10.17605/OSF.IO/GQ6C8},
-  pubstate = {Working Paper (v2026-03-01-13-00)}
+  pubstate = {Working Paper (v2026-06-29-16-24)}
 }
 ```
